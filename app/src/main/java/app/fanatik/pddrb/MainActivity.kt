@@ -196,27 +196,41 @@ class MainActivity:ComponentActivity(){
 }
 
 @Composable fun RoadSituation(type:Int){
- Card(modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFD9D6CC))){
-  Canvas(Modifier.fillMaxWidth().height(190.dp)){
-   val w=size.width;val h=size.height;val road=Color(0xFF50545A);val lawn=Color(0xFFD7D1C1);val line=Color(0xFFF8F5E9)
-   drawRect(lawn)
-   fun vehicle(cx:Float,cy:Float,vertical:Boolean,color:Color){
-    val cw=if(vertical)w*.105f else w*.205f;val ch=if(vertical)h*.30f else h*.15f
-    drawRoundRect(Color(0x44000000),Offset(cx-cw/2+4,cy-ch/2+5),Size(cw,ch),CornerRadius(12f,12f));drawRoundRect(color,Offset(cx-cw/2,cy-ch/2),Size(cw,ch),CornerRadius(12f,12f))
-    if(vertical){drawRoundRect(Color(0xFFC9E0EA),Offset(cx-cw*.34f,cy-ch*.27f),Size(cw*.68f,ch*.17f),CornerRadius(5f,5f));drawRoundRect(Color(0xFF9FBAC7),Offset(cx-cw*.34f,cy+ch*.09f),Size(cw*.68f,ch*.14f),CornerRadius(5f,5f))}
-    else{drawRoundRect(Color(0xFFC9E0EA),Offset(cx-cw*.27f,cy-ch*.34f),Size(cw*.17f,ch*.68f),CornerRadius(5f,5f));drawRoundRect(Color(0xFF9FBAC7),Offset(cx+cw*.09f,cy-ch*.34f),Size(cw*.14f,ch*.68f),CornerRadius(5f,5f))}
+ Card(modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFD9D4C6))){
+  Canvas(Modifier.fillMaxWidth().height(205.dp)){
+   val w=size.width;val h=size.height;val road=Color(0xFF474C52);val grass=Color(0xFFBFC9A9);val curb=Color(0xFFD8D5CB);val white=Color(0xFFF7F4E9)
+   drawRect(grass)
+   fun laneH(){drawRect(curb,Offset(0f,h*.20f),Size(w,h*.60f));drawRect(road,Offset(0f,h*.23f),Size(w,h*.54f))}
+   fun laneV(){drawRect(curb,Offset(w*.31f,0f),Size(w*.38f,h));drawRect(road,Offset(w*.34f,0f),Size(w*.32f,h))}
+   fun dashH(y:Float){for(i in 0..9 step 2)drawLine(white,Offset(w*i/10f,y),Offset(w*(i+1)/10f,y),3f)}
+   fun dashV(x:Float){for(i in 0..9 step 2)drawLine(white,Offset(x,h*i/10f),Offset(x,h*(i+1)/10f),3f)}
+   fun car(cx:Float,cy:Float,vertical:Boolean,color:Color){
+    val cw=if(vertical)w*.115f else w*.22f;val ch=if(vertical)h*.32f else h*.17f
+    drawRoundRect(Color(0x55000000),Offset(cx-cw/2+5,cy-ch/2+6),Size(cw,ch),CornerRadius(15f))
+    drawRoundRect(color,Offset(cx-cw/2,cy-ch/2),Size(cw,ch),CornerRadius(15f))
+    if(vertical){
+     drawRoundRect(Color(0xFFB9D6E4),Offset(cx-cw*.34f,cy-ch*.28f),Size(cw*.68f,ch*.18f),CornerRadius(5f))
+     drawRoundRect(Color(0xFF83A8BA),Offset(cx-cw*.34f,cy+ch*.08f),Size(cw*.68f,ch*.17f),CornerRadius(5f))
+     drawCircle(Color(0xFFFFF1B0),3.5f,Offset(cx-cw*.27f,cy-ch*.43f));drawCircle(Color(0xFFFFF1B0),3.5f,Offset(cx+cw*.27f,cy-ch*.43f))
+    }else{
+     drawRoundRect(Color(0xFFB9D6E4),Offset(cx-cw*.28f,cy-ch*.34f),Size(cw*.18f,ch*.68f),CornerRadius(5f))
+     drawRoundRect(Color(0xFF83A8BA),Offset(cx+cw*.08f,cy-ch*.34f),Size(cw*.17f,ch*.68f),CornerRadius(5f))
+     drawCircle(Color(0xFFFFF1B0),3.5f,Offset(cx+cw*.43f,cy-ch*.27f));drawCircle(Color(0xFFFFF1B0),3.5f,Offset(cx+cw*.43f,cy+ch*.27f))
+    }
    }
-   fun dashed(a:Offset,b:Offset){for(i in 0..7 step 2){val t=i/8f;val u=(i+1)/8f;drawLine(line,Offset(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t),Offset(a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u),3.5f)}}
-   if(type==1||type==3){
-    drawRect(road,Offset(w*.33f,0f),Size(w*.34f,h));drawRect(road,Offset(0f,h*.33f),Size(w,h*.34f))
-    dashed(Offset(w*.5f,0f),Offset(w*.5f,h*.30f));dashed(Offset(w*.5f,h*.70f),Offset(w*.5f,h));dashed(Offset(0f,h*.5f),Offset(w*.30f,h*.5f));dashed(Offset(w*.70f,h*.5f),Offset(w,h*.5f))
-    vehicle(w*.43f,h*.80f,true,Color(0xFFE44B46))
-    if(type==1) vehicle(w*.80f,h*.43f,false,Color(0xFF397FD5))
-    else{drawCircle(Color.White,24f,Offset(w*.76f,h*.75f));val p=Path();p.moveTo(w*.76f-18,h*.75f-13);p.lineTo(w*.76f+18,h*.75f-13);p.lineTo(w*.76f,h*.75f+19);p.close();drawPath(p,Color(0xFFF2C94C));drawPath(p,Color(0xFF333333),style=androidx.compose.ui.graphics.drawscope.Stroke(width=3f))}
-   }else{
-    drawRect(road,Offset(0f,h*.19f),Size(w,h*.62f));dashed(Offset(0f,h*.5f),Offset(w,h*.5f));vehicle(w*.25f,h*.63f,false,Color(0xFFE44B46))
-    if(type==2){drawRoundRect(Color(0xFF25272A),Offset(w*.76f,h*.03f),Size(w*.095f,h*.39f),CornerRadius(10f,10f));drawCircle(Color(0xFFE53935),14f,Offset(w*.807f,h*.10f));drawCircle(Color(0xFF55585C),14f,Offset(w*.807f,h*.22f));drawCircle(Color(0xFF55585C),14f,Offset(w*.807f,h*.34f))}
-    else vehicle(w*.67f,h*.37f,false,Color(0xFF397FD5))
+   fun zebra(x0:Float,x1:Float,y0:Float,y1:Float,vertical:Boolean){
+    for(i in 0..7 step 2) if(vertical) drawRect(white,Offset(x0+(x1-x0)*i/8f,y0),Size((x1-x0)/8f,y1-y0))
+    else drawRect(white,Offset(x0,y0+(y1-y0)*i/8f),Size(x1-x0,(y1-y0)/8f))
+   }
+   fun arrow(a:Offset,b:Offset,color:Color=Color(0xFFFFD54F)){drawLine(color,a,b,7f);val dx=b.x-a.x;val dy=b.y-a.y;val len=kotlin.math.sqrt(dx*dx+dy*dy);val ux=dx/len;val uy=dy/len;val px=-uy;val py=ux;drawLine(color,b,Offset(b.x-ux*18+px*10,b.y-uy*18+py*10),7f);drawLine(color,b,Offset(b.x-ux*18-px*10,b.y-uy*18-py*10),7f)}
+   when(type){
+    1,3->{laneH();laneV();dashH(h*.5f);dashV(w*.5f);car(w*.43f,h*.82f,true,Color(0xFFE44743));if(type==1){car(w*.82f,h*.43f,false,Color(0xFF397FD5));arrow(Offset(w*.43f,h*.69f),Offset(w*.43f,h*.54f));arrow(Offset(w*.70f,h*.43f),Offset(w*.54f,h*.43f))}else{val p=Path();p.moveTo(w*.77f,h*.63f);p.lineTo(w*.84f,h*.76f);p.lineTo(w*.70f,h*.76f);p.close();drawPath(p,Color.White);drawPath(p,Color(0xFFE14A45),style=androidx.compose.ui.graphics.drawscope.Stroke(5f));arrow(Offset(w*.43f,h*.68f),Offset(w*.43f,h*.53f))}}
+    2->{laneH();dashH(h*.5f);car(w*.28f,h*.63f,false,Color(0xFFE44743));drawRoundRect(Color(0xFF202328),Offset(w*.78f,h*.02f),Size(w*.10f,h*.42f),CornerRadius(12f));drawCircle(Color(0xFFE53935),14f,Offset(w*.83f,h*.10f));drawCircle(Color(0xFF55585C),14f,Offset(w*.83f,h*.23f));drawCircle(Color(0xFF55585C),14f,Offset(w*.83f,h*.36f));arrow(Offset(w*.39f,h*.63f),Offset(w*.55f,h*.63f),Color(0x66FFD54F))}
+    4->{laneH();drawLine(white,Offset(0f,h*.5f),Offset(w,h*.5f),3f);car(w*.31f,h*.64f,false,Color(0xFFE44743));car(w*.62f,h*.38f,false,Color(0xFF397FD5));arrow(Offset(w*.39f,h*.64f),Offset(w*.55f,h*.40f))}
+    5->{laneH();dashH(h*.5f);zebra(w*.61f,w*.72f,h*.23f,h*.77f,true);car(w*.34f,h*.63f,false,Color(0xFFE44743));drawCircle(Color(0xFF2C2D30),7f,Offset(w*.66f,h*.42f));drawLine(Color(0xFF2C2D30),Offset(w*.66f,h*.45f),Offset(w*.66f,h*.57f),5f);drawLine(Color(0xFF2C2D30),Offset(w*.66f,h*.49f),Offset(w*.63f,h*.53f),4f);drawLine(Color(0xFF2C2D30),Offset(w*.66f,h*.49f),Offset(w*.69f,h*.53f),4f)}
+    6->{laneH();drawLine(white,Offset(0f,h*.5f),Offset(w,h*.5f),6f);car(w*.30f,h*.63f,false,Color(0xFFE44743));car(w*.57f,h*.63f,false,Color(0xFF87919A));val p=Path();p.moveTo(w*.36f,h*.62f);p.cubicTo(w*.43f,h*.36f,w*.59f,h*.35f,w*.69f,h*.38f);drawPath(p,Color(0xFFFFD54F),style=androidx.compose.ui.graphics.drawscope.Stroke(7f))}
+    7->{laneH();dashH(h*.5f);zebra(w*.62f,w*.73f,h*.23f,h*.77f,true);car(w*.48f,h*.63f,false,Color(0xFFE44743));drawLine(Color(0xFFFFC107),Offset(w*.59f,h*.24f),Offset(w*.59f,h*.76f),5f)}
+    else->{laneH();dashH(h*.5f);car(w*.30f,h*.63f,false,Color(0xFFE44743));car(w*.67f,h*.37f,false,Color(0xFF397FD5))}
    }
   }
  }

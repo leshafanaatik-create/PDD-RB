@@ -111,6 +111,11 @@ class MainActivity:ComponentActivity(){
  var xp by remember{mutableIntStateOf(prefs.getInt("xp",0))}
  var streak by remember{mutableIntStateOf(prefs.getInt("streak",0))}
  var mistakes by remember{mutableStateOf(prefs.getStringSet("mistakes",emptySet())?.toSet()?:emptySet())}
+ var solved by remember{mutableStateOf(prefs.getStringSet("solved",emptySet())?.toSet()?:emptySet())}
+ var attempts by remember{mutableIntStateOf(prefs.getInt("attempts",0))}
+ var rightTotal by remember{mutableIntStateOf(prefs.getInt("right_total",0))}
+ val accuracy=if(attempts==0)0 else (rightTotal*100/attempts)
+
  fun alternatingExam(count:Int=10):List<Question>{
   val visual=qs.filter{it.visual>=100}.shuffled().toMutableList()
   val theory=qs.filter{it.visual==0}.shuffled().toMutableList()
@@ -123,24 +128,34 @@ class MainActivity:ComponentActivity(){
   return result
  }
  fun start(list:List<Question>){if(list.isEmpty())return;pool=list;index=0;correctCount=0;current=pool.first();screen="question"}
+ fun startTopic(title:String){start(qs.filter{it.topic==title})}
  fun next(){if(index+1<pool.size){index++;current=pool[index]}else screen="home"}
+
  Surface(Modifier.fillMaxSize(),color=AppBg){
   when(screen){
-   "home"->HomeScreen(xp,streak,mistakes.size,{screen="topics"},{start(alternatingExam())},{screen="errors"},{start(qs.filter{it.visual>=100}.shuffled())},{screen="profile"})
+   "home"->HomeScreen(
+    xp=xp,streak=streak,solved=solved.size,accuracy=accuracy,
+    onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"},
+    onImages={start(qs.filter{it.visual>=100}.shuffled())},onProfile={screen="profile"},
+    onSigns={startTopic("Дорожные знаки")},onMarking={startTopic("Дорожная разметка")},
+    onTraffic={startTopic("Светофор и регулировщик")}
+   )
    "topics"->TopicScreen(
-    onHome={screen="home"},
-    onTopic={start(it)},
-    onExam={start(alternatingExam())},
-    onErrors={screen="errors"},
-    onProfile={screen="profile"}
+    solved=solved,onHome={screen="home"},onTopic={start(it)},onExam={start(alternatingExam())},
+    onErrors={screen="errors"},onProfile={screen="profile"}
    )
    "profile"->ProfileScreen(
     xp=xp,streak=streak,mistakes=mistakes.size,
     onHome={screen="home"},onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"}
    )
    "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{screen="home"},{ok->
-    if(ok){correctCount++;streak++;xp+=10+streak.coerceAtMost(10);mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
-    prefs.edit().putInt("xp",xp).putInt("streak",streak).putStringSet("mistakes",mistakes).apply()
+    attempts++
+    solved=solved+current.text
+    if(ok){correctCount++;rightTotal++;streak++;xp+=10+streak.coerceAtMost(10);mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
+    prefs.edit()
+     .putInt("xp",xp).putInt("streak",streak)
+     .putInt("attempts",attempts).putInt("right_total",rightTotal)
+     .putStringSet("mistakes",mistakes).putStringSet("solved",solved).apply()
    },{next()})
    else->ErrorScreen(
     mistakes=mistakes,onStart={start(qs.filter{mistakes.contains(it.text)})},

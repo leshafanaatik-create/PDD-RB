@@ -13,6 +13,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -141,7 +146,7 @@ class MainActivity:ComponentActivity(){
   item{Button(onTopics,Modifier.fillMaxWidth().height(58.dp),shape=RoundedCornerShape(18.dp)){Text("Учить по темам",style=MaterialTheme.typography.titleMedium)}}
   item{Button(onExam,Modifier.fillMaxWidth().height(58.dp),shape=RoundedCornerShape(18.dp)){Text("Экзамен • 10 вопросов",style=MaterialTheme.typography.titleMedium)}}
   item{OutlinedButton(onErrors,Modifier.fillMaxWidth().height(56.dp),shape=RoundedCornerShape(18.dp)){Text("Работа над ошибками")}}
-  item{Text("v0.2.0 • учебная версия",color=Color.Gray,modifier=Modifier.padding(top=8.dp))}
+  item{Text("Denis Edition • актуальная сборка",color=Color.Gray,modifier=Modifier.padding(top=8.dp))}
  }
 }
 
@@ -155,25 +160,34 @@ class MainActivity:ComponentActivity(){
 @Composable fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:Int,onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit){
  var answer by remember(q){mutableStateOf<Int?>(null)}
  var quip by remember(q){mutableStateOf<String?>(null)}
- LazyColumn(Modifier.fillMaxSize().padding(horizontal=20.dp),contentPadding=PaddingValues(top=14.dp,bottom=28.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
-  item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){TextButton(onBack){Text("← Выйти")};Spacer(Modifier.weight(1f));Text("${index+1} / $total",fontWeight=FontWeight.SemiBold)}}
-  item{LinearProgressIndicator(progress={ (index+1).toFloat()/total.coerceAtLeast(1) },modifier=Modifier.fillMaxWidth().height(7.dp))}
-  item{Row(Modifier.fillMaxWidth()){Text(q.topic,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.SemiBold);Spacer(Modifier.weight(1f));Text("✓ $correctCount",color=Good,fontWeight=FontWeight.Bold)}}
-  item{Text(q.text,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.SemiBold)}
-  if(q.visual>0) item{RoadSituation(q.visual)}
-  items(q.answers.size){i->
-   val a=q.answers[i];val selected=answer==i;val correct=answer!=null&&i==q.correct;val wrong=answer!=null&&selected&&i!=q.correct
-   val container=when{correct->GoodBg;wrong->BadBg;else->Color.Transparent};val border=when{correct->Good;wrong->Bad;else->Color(0xFF817984)}
-   OutlinedButton(onClick={if(answer==null){answer=i;val ok=i==q.correct;quip=reaction(ok,if(ok)streak+1 else 0);onAnswered(ok)}},modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=62.dp),shape=RoundedCornerShape(18.dp),colors=ButtonDefaults.outlinedButtonColors(containerColor=container,contentColor=when{correct->Good;wrong->Bad;else->MaterialTheme.colorScheme.primary}),border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border),contentPadding=PaddingValues(horizontal=18.dp,vertical=14.dp)){Text((if(correct)"✓ " else if(wrong)"✕ " else "")+a,style=MaterialTheme.typography.titleMedium)}
+ var showExplain by remember(q){mutableStateOf(false)}
+ LaunchedEffect(quip){if(quip!=null){delay(2100);quip=null}}
+ Box(Modifier.fillMaxSize()){
+  LazyColumn(Modifier.fillMaxSize().padding(horizontal=18.dp),contentPadding=PaddingValues(top=8.dp,bottom=24.dp),verticalArrangement=Arrangement.spacedBy(9.dp)){
+   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){TextButton(onBack,contentPadding=PaddingValues(4.dp)){Text("← Выйти")};Spacer(Modifier.weight(1f));Text("${index+1} / $total",fontWeight=FontWeight.Bold)}}
+   item{LinearProgressIndicator(progress={ (index+1).toFloat()/total.coerceAtLeast(1) },modifier=Modifier.fillMaxWidth().height(5.dp))}
+   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(q.topic,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.labelLarge);Spacer(Modifier.weight(1f));Text("✓ $correctCount",color=Good,fontWeight=FontWeight.Bold)}}
+   item{Text(q.text,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
+   if(q.visual>0) item{RoadSituation(q.visual)}
+   items(q.answers.size){i->
+    val a=q.answers[i];val selected=answer==i;val correct=answer!=null&&i==q.correct;val wrong=answer!=null&&selected&&i!=q.correct
+    val container=when{correct->GoodBg;wrong->BadBg;else->Color.White};val border=when{correct->Good;wrong->Bad;else->Color(0xFFD3CDD7)}
+    OutlinedButton(onClick={if(answer==null){answer=i;val ok=i==q.correct;quip=reaction(ok,if(ok)streak+1 else 0);onAnswered(ok);showExplain=true}},modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=50.dp),shape=RoundedCornerShape(14.dp),colors=ButtonDefaults.outlinedButtonColors(containerColor=container,contentColor=when{correct->Good;wrong->Bad;else->Color(0xFF352F39)}),border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border),contentPadding=PaddingValues(horizontal=14.dp,vertical=10.dp)){Text((if(correct)"✓  " else if(wrong)"✕  " else "")+a,style=MaterialTheme.typography.bodyLarge,fontWeight=FontWeight.SemiBold)}
+   }
   }
-  answer?.let{ans->
-   item{Card(colors=CardDefaults.cardColors(containerColor=if(ans==q.correct)GoodBg else BadBg),shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp)){Text(if(ans==q.correct)"Правильно" else "Неверно",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=if(ans==q.correct)Good else Bad);Spacer(Modifier.height(6.dp));Text("Почему?",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold);Spacer(Modifier.height(5.dp));Text(q.explanation,style=MaterialTheme.typography.bodyLarge)}}}
-   quip?.let{msg->item{Card(colors=CardDefaults.cardColors(containerColor=Color(0xFFFFF1C9)),shape=RoundedCornerShape(18.dp)){Text(msg,Modifier.padding(16.dp),fontWeight=FontWeight.Bold)}}}
-   item{Button(onNext,Modifier.fillMaxWidth().height(56.dp),shape=RoundedCornerShape(18.dp)){Text(if(index+1<total)"Следующий вопрос →" else "Завершить")}}
+  AnimatedVisibility(visible=quip!=null,enter=fadeIn(),exit=fadeOut(),modifier=Modifier.align(Alignment.TopCenter).padding(top=72.dp,start=22.dp,end=22.dp)){
+   Surface(shadowElevation=10.dp,tonalElevation=4.dp,shape=RoundedCornerShape(18.dp),color=Color(0xFF25212A)){Row(Modifier.padding(horizontal=18.dp,vertical=14.dp),verticalAlignment=Alignment.CenterVertically){Text("🔥",style=MaterialTheme.typography.titleLarge);Spacer(Modifier.width(10.dp));Text(quip?:"",color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.bodyLarge)}}
   }
  }
+ answer?.let{ans->if(showExplain) Dialog(onDismissRequest={}){
+  Surface(shape=RoundedCornerShape(26.dp),color=Color.White,shadowElevation=18.dp){Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+   Text(if(ans==q.correct)"✓ Правильно" else "✕ Неверно",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold,color=if(ans==q.correct)Good else Bad)
+   Text("Разберём по-простому",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
+   Text(q.explanation,style=MaterialTheme.typography.bodyLarge)
+   Button(onClick={showExplain=false;onNext()},modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(14.dp)){Text(if(index+1<total)"Понятно, дальше →" else "Завершить")}
+  }}
+ }}
 }
-
 
 @Composable fun RoadSituation(type:Int){
  Card(modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp)){

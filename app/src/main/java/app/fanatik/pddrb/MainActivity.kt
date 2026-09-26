@@ -57,7 +57,7 @@ class MainActivity:ComponentActivity(){
    }
    "topics"->LazyColumn(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
     item{TextButton({screen="home"}){Text("← Назад")};Text("Темы",style=MaterialTheme.typography.headlineMedium)}
-    items(topics){t->Card(Modifier.fillMaxWidth(),onClick={selected=qs.firstOrNull{it.topic==t.title}?:qs.random();screen="question"}){Column(Modifier.padding(16.dp)){Text(t.title,style=MaterialTheme.typography.titleMedium);Text(t.subtitle)}}}
+    items(topics){t->Card(onClick={selected=qs.firstOrNull{it.topic==t.title}?:qs.random();screen="question"},modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(16.dp)){Text(t.title,style=MaterialTheme.typography.titleMedium);Text(t.subtitle)}}}
    }
    "question"->QuestionView(selected?:qs.first()){screen="home"}
    else->Column(Modifier.padding(20.dp)){TextButton({screen="home"}){Text("← Назад")};Text("Работа над ошибками",style=MaterialTheme.typography.headlineMedium);Text("Ошибки появятся здесь после прохождения вопросов.")}

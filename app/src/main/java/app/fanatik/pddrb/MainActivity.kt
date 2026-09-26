@@ -491,16 +491,7 @@ fun HomeScreen(
      }
     }
    }
-   item{ProfileHero(xp)}
-   item{
-    Surface(shape=RoundedCornerShape(16.dp),color=Color(0xFF0B1523),border=BorderStroke(1.dp,Color(0xFF17263A))){
-     Row(Modifier.fillMaxWidth().padding(vertical=10.dp,horizontal=6.dp)){
-      HomeStat(Icons.Rounded.LocalFireDepartment,streak.toString(),"Серия",Orange,Modifier.weight(1f))
-      HomeStat(Icons.Rounded.BarChart,solved.toString(),"Решено",Good,Modifier.weight(1f))
-      HomeStat(Icons.Rounded.TrackChanges,accuracy.toString()+"%","Точность",Bad,Modifier.weight(1f))
-     }
-    }
-   }
+   item{ProfileHero(xp,streak,solved,accuracy)}
    item{PrimaryAction("Продолжить обучение","Случайные вопросы • теория + ситуации",onContinue)}
    item{FullWidthAction("Экзамен","Как в ГАИ • 10 вопросов",Icons.Rounded.School,Color(0xFF6F8BFF),onExam)}
    item{

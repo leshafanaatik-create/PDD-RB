@@ -382,12 +382,13 @@ private fun SmallHomeTile(
 private fun RecentTopicCard(title:String,progress:Int,onClick:()->Unit,modifier:Modifier=Modifier){
  Surface(onClick=onClick,modifier=modifier,shape=RoundedCornerShape(16.dp),color=Color(0xFF101A2C),border=BorderStroke(1.dp,Color(0xFF1D2A42))){
   Row(Modifier.padding(9.dp),verticalAlignment=Alignment.CenterVertically){
-   Image(
-    painter=painterResource(R.drawable.scene_premium_intersection),
-    contentDescription=null,
-    modifier=Modifier.size(width=68.dp,height=52.dp).clip(RoundedCornerShape(10.dp)),
-    contentScale=ContentScale.Crop
-   )
+   Box(
+    Modifier.size(width=68.dp,height=52.dp).clip(RoundedCornerShape(10.dp))
+     .background(Brush.linearGradient(listOf(Color(0xFF203A61),Color(0xFF16243B)))),
+    contentAlignment=Alignment.Center
+   ){
+    Icon(Icons.Rounded.AltRoute,null,tint=Color(0xFF9FC3FF),modifier=Modifier.size(28.dp))
+   }
    Spacer(Modifier.width(9.dp))
    Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)){
     Text(title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelLarge,maxLines=1)

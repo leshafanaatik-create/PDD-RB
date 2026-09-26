@@ -135,10 +135,16 @@ class MainActivity:ComponentActivity(){
   when(screen){
    "home"->HomeScreen(
     xp=xp,streak=streak,solved=solved.size,accuracy=accuracy,
+    onContinue={
+     val theory=qs.filter{it.visual==0}.shuffled().take(7)
+     val visual=qs.filter{it.visual==101}.shuffled().take(3)
+     start((theory+visual).shuffled())
+    },
     onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"},
     onImages={start(qs.filter{it.visual==101}.shuffled())},onProfile={screen="profile"},
     onSigns={startTopic("Дорожные знаки")},onMarking={startTopic("Дорожная разметка")},
-    onTraffic={startTopic("Светофор и регулировщик")}
+    onTraffic={startTopic("Светофор и регулировщик")},
+    onIntersections={startTopic("Проезд перекрёстков")},onManeuver={startTopic("Маневрирование")}
    )
    "topics"->TopicScreen(
     solved=solved,onHome={screen="home"},onTopic={start(it)},onExam={start(alternatingExam())},
@@ -336,10 +342,17 @@ private fun RecentTopicCard(title:String,progress:Int,onClick:()->Unit,modifier:
 }
 
 @Composable
+private fun questionWord(n:Int):String{
+ val n100=n%100
+ val n10=n%10
+ return if(n100 in 11..14)"вопросов" else when(n10){1->"вопрос";2,3,4->"вопроса";else->"вопросов"}
+}
+
+@Composable
 fun HomeScreen(
  xp:Int,streak:Int,solved:Int,accuracy:Int,
- onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onImages:()->Unit,onProfile:()->Unit,
- onSigns:()->Unit,onMarking:()->Unit,onTraffic:()->Unit
+ onContinue:()->Unit,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onImages:()->Unit,onProfile:()->Unit,
+ onSigns:()->Unit,onMarking:()->Unit,onTraffic:()->Unit,onIntersections:()->Unit,onManeuver:()->Unit
 ){
  Scaffold(containerColor=AppBg,bottomBar={BottomNav("home",{},onTopics,onExam,onErrors,onProfile)}){inner->
   LazyColumn(
@@ -368,7 +381,7 @@ fun HomeScreen(
      }
     }
    }
-   item{PrimaryAction("Продолжить обучение","Случайные вопросы • теория + ситуации",onImages)}
+   item{PrimaryAction("Продолжить обучение","Случайные вопросы • теория + ситуации",onContinue)}
    item{FullWidthAction("Экзамен","Как в ГАИ • 10 вопросов",Icons.Rounded.School,Color(0xFF6F8BFF),onExam)}
    item{
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -390,8 +403,8 @@ fun HomeScreen(
    }
    item{
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-     RecentTopicCard("Перекрёстки",62,onTraffic,Modifier.weight(1f))
-     RecentTopicCard("Маневрирование",38,onMarking,Modifier.weight(1f))
+     RecentTopicCard("Перекрёстки",62,onIntersections,Modifier.weight(1f))
+     RecentTopicCard("Маневрирование",38,onManeuver,Modifier.weight(1f))
     }
    }
   }

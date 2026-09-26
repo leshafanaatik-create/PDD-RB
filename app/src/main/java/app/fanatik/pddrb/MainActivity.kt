@@ -127,7 +127,7 @@ class MainActivity:ComponentActivity(){
    "home"->HomeScreen(xp,streak,mistakes.size,{screen="topics"},{start(alternatingExam())},{screen="errors"},{start(qs.filter{it.visual>=100}.shuffled())},{screen="profile"})
    "topics"->TopicScreen(
     onHome={screen="home"},
-    onTopic={start(qs.filter{q->q.topic==it.title})},
+    onTopic={start(it)},
     onExam={start(alternatingExam())},
     onErrors={screen="errors"},
     onProfile={screen="profile"}
@@ -273,35 +273,136 @@ fun HomeScreen(xp:Int,streak:Int,mistakes:Int,onTopics:()->Unit,onExam:()->Unit,
 }
 
 @Composable
-private fun ErrorScreen(mistakes:Set<String>,onBack:()->Unit,onStart:()->Unit){
- Column(Modifier.fillMaxSize().background(AppBg).statusBarsPadding().padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
-  TextButton(onBack){Icon(Icons.Rounded.ArrowBack,null);Spacer(Modifier.width(6.dp));Text("Главная")}
-  Text("Работа над ошибками",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold)
-  Text("Слабые места собраны здесь — без лишнего шума.",color=TextMuted)
-  Surface(shape=RoundedCornerShape(20.dp),color=AppCard,border=BorderStroke(1.dp,AppStroke)){
-   Column(Modifier.padding(18.dp)){
-    Text(mistakes.size.toString(),color=if(mistakes.isEmpty())Good else Bad,style=MaterialTheme.typography.displaySmall,fontWeight=FontWeight.Black)
-    Text(if(mistakes.isEmpty())"Ошибок пока нет" else "вопросов нужно повторить",color=TextMuted)
+private fun ErrorScreen(
+ mistakes:Set<String>,onStart:()->Unit,onHome:()->Unit,onTopics:()->Unit,onExam:()->Unit,onProfile:()->Unit
+){
+ Scaffold(containerColor=AppBg,bottomBar={BottomNav("errors",onHome,onTopics,onExam,{},onProfile)}){inner->
+  Column(Modifier.fillMaxSize().padding(inner).padding(horizontal=18.dp,vertical=18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
+   Text("Ошибки",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold)
+   Text("Повторяй только то, где Петрович дал слабину.",color=TextMuted)
+   Surface(shape=RoundedCornerShape(20.dp),color=AppCard,border=BorderStroke(1.dp,AppStroke),modifier=Modifier.fillMaxWidth()){
+    Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){
+     Surface(shape=RoundedCornerShape(14.dp),color=Bad.copy(alpha=.14f)){Icon(Icons.Rounded.Error,null,tint=Bad,modifier=Modifier.padding(11.dp).size(28.dp))}
+     Spacer(Modifier.width(14.dp))
+     Column(Modifier.weight(1f)){
+      Text(mistakes.size.toString(),color=if(mistakes.isEmpty())Good else Bad,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black)
+      Text(if(mistakes.isEmpty())"Ошибок пока нет" else "вопросов нужно повторить",color=TextMuted)
+     }
+    }
    }
+   if(mistakes.isNotEmpty())Button(onClick=onStart,modifier=Modifier.fillMaxWidth().height(54.dp),shape=RoundedCornerShape(16.dp)){Text("Разобрать ошибки")}
   }
-  if(mistakes.isNotEmpty())Button(onClick=onStart,modifier=Modifier.fillMaxWidth().height(54.dp),shape=RoundedCornerShape(16.dp)){Text("Разобрать ошибки")}
  }
 }
 
 @Composable
-private fun ProfileScreen(xp:Int,streak:Int,mistakes:Int,onBack:()->Unit){
+private fun ProfileScreen(
+ xp:Int,streak:Int,mistakes:Int,onHome:()->Unit,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit
+){
  val rank=rankFor(xp)
- LazyColumn(Modifier.fillMaxSize().background(AppBg).statusBarsPadding().padding(horizontal=18.dp),contentPadding=PaddingValues(bottom=30.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
-  item{Row(verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Rounded.ArrowBack,null,tint=TextPrimary)};Text("Профиль",color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.headlineSmall)}}
-  item{Card(colors=CardDefaults.cardColors(containerColor=AppCard),shape=RoundedCornerShape(24.dp),border=BorderStroke(1.dp,AppStroke)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){Row(verticalAlignment=Alignment.CenterVertically){Surface(shape=CircleShape,color=Accent.copy(alpha=.2f)){Icon(Icons.Rounded.DirectionsCar,null,tint=Color(0xFFC9B8FF),modifier=Modifier.padding(16.dp).size(34.dp))};Spacer(Modifier.width(14.dp));Column{Text(rank.title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text(xp.toString()+" XP",color=TextMuted)}};Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){StatTile(Icons.Rounded.LocalFireDepartment,streak.toString(),"серия",Orange,Modifier.weight(1f));StatTile(Icons.Rounded.Error,mistakes.toString(),"ошибки",Bad,Modifier.weight(1f))}}}}
-  item{Text("PDD-RB 2.0",color=TextMuted,style=MaterialTheme.typography.labelLarge)}
+ Scaffold(containerColor=AppBg,bottomBar={BottomNav("profile",onHome,onTopics,onExam,onErrors,{})}){inner->
+  LazyColumn(Modifier.fillMaxSize().padding(inner).padding(horizontal=18.dp),contentPadding=PaddingValues(top=18.dp,bottom=24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
+   item{Text("Профиль",color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.headlineMedium)}
+   item{
+    Card(colors=CardDefaults.cardColors(containerColor=AppCard),shape=RoundedCornerShape(22.dp),border=BorderStroke(1.dp,AppStroke)){
+     Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
+      Row(verticalAlignment=Alignment.CenterVertically){
+       Surface(shape=CircleShape,color=Accent.copy(alpha=.2f)){Icon(Icons.Rounded.DirectionsCar,null,tint=Color(0xFFC9B8FF),modifier=Modifier.padding(14.dp).size(32.dp))}
+       Spacer(Modifier.width(14.dp))
+       Column(Modifier.weight(1f)){Text(rank.title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text(xp.toString()+" XP",color=TextMuted)}
+      }
+      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+       StatTile(Icons.Rounded.LocalFireDepartment,streak.toString(),"серия",Orange,Modifier.weight(1f))
+       StatTile(Icons.Rounded.Error,mistakes.toString(),"ошибки",Bad,Modifier.weight(1f))
+      }
+     }
+    }
+   }
+   item{Text("PDD-RB 2.0 • Denis Edition",color=TextMuted,style=MaterialTheme.typography.labelLarge)}
+  }
  }
 }
 
-@Composable fun TopicScreen(onBack:()->Unit,onTopic:(Topic)->Unit){
- LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),contentPadding=PaddingValues(top=18.dp,bottom=30.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
-  item{TextButton(onBack){Text("← На главную")};Text("Темы",style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Bold);Spacer(Modifier.height(6.dp))}
-  items(items=topics){t:Topic->val count=qs.count{it.topic==t.title};Card(onClick={onTopic(t)},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp)){Column(Modifier.padding(18.dp)){Text(t.title,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);Spacer(Modifier.height(3.dp));Text(t.subtitle,color=Color(0xFF6E6873));if(count>0){Spacer(Modifier.height(7.dp));Text("$count вопросов",style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.primary)}}}}
+private fun topicIcon(title:String):androidx.compose.ui.graphics.vector.ImageVector=when(title){
+ "Общие положения"->Icons.Rounded.Info
+ "Дорожные знаки"->Icons.Rounded.Warning
+ "Дорожная разметка"->Icons.Rounded.Straighten
+ "Светофор и регулировщик"->Icons.Rounded.Traffic
+ "Маневрирование"->Icons.Rounded.SwapHoriz
+ "Расположение на дороге"->Icons.Rounded.ViewWeek
+ "Скорость движения"->Icons.Rounded.Speed
+ "Обгон и встречный разъезд"->Icons.Rounded.CompareArrows
+ "Остановка и стоянка"->Icons.Rounded.LocalParking
+ "Проезд перекрёстков"->Icons.Rounded.AltRoute
+ "Пешеходы и переходы"->Icons.Rounded.DirectionsWalk
+ "Железнодорожные переезды"->Icons.Rounded.Train
+ "Автомагистрали"->Icons.Rounded.DirectionsCar
+ "Световые приборы"->Icons.Rounded.LightMode
+ "Перевозка людей и грузов"->Icons.Rounded.Luggage
+ "Техническое состояние"->Icons.Rounded.Build
+ else->Icons.Rounded.HealthAndSafety
+}
+
+private fun topicTint(index:Int):Color=listOf(
+ Color(0xFFFF6677),Color(0xFFFFB44A),Color(0xFF7C89FF),Color(0xFF4DD7B3),
+ Color(0xFF5CA8FF),Color(0xFFA882FF),Color(0xFFFF8C5A),Color(0xFF35C8E7)
+)[index%8]
+
+@Composable
+fun TopicScreen(
+ onHome:()->Unit,onTopic:(List<Question>)->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit
+){
+ var filter by remember{mutableStateOf("all")}
+ val visibleTopics=topics.filter{t->
+  val list=qs.filter{it.topic==t.title}
+  when(filter){"images"->list.any{it.visual>0};"theory"->list.any{it.visual==0};else->list.isNotEmpty()}
+ }
+ Scaffold(containerColor=AppBg,bottomBar={BottomNav("topics",onHome,{},onExam,onErrors,onProfile)}){inner->
+  LazyColumn(
+   Modifier.fillMaxSize().padding(inner).padding(horizontal=16.dp),
+   contentPadding=PaddingValues(top=16.dp,bottom=20.dp),
+   verticalArrangement=Arrangement.spacedBy(9.dp)
+  ){
+   item{
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+     Column(Modifier.weight(1f)){Text("Категории",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black);Text("Выбери раздел ПДД",color=TextMuted,style=MaterialTheme.typography.bodyMedium)}
+     Icon(Icons.Rounded.Search,null,tint=TextMuted,modifier=Modifier.size(25.dp))
+    }
+   }
+   item{
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
+     FilterChip(selected=filter=="all",onClick={filter="all"},label={Text("Все")},colors=FilterChipDefaults.filterChipColors(selectedContainerColor=Accent,selectedLabelColor=Color.White,containerColor=AppCard,labelColor=TextMuted),border=FilterChipDefaults.filterChipBorder(enabled=true,selected=filter=="all",borderColor=AppStroke,selectedBorderColor=Accent))
+     FilterChip(selected=filter=="images",onClick={filter="images"},label={Text("С картинками")},colors=FilterChipDefaults.filterChipColors(selectedContainerColor=Accent,selectedLabelColor=Color.White,containerColor=AppCard,labelColor=TextMuted),border=FilterChipDefaults.filterChipBorder(enabled=true,selected=filter=="images",borderColor=AppStroke,selectedBorderColor=Accent))
+     FilterChip(selected=filter=="theory",onClick={filter="theory"},label={Text("Теория")},colors=FilterChipDefaults.filterChipColors(selectedContainerColor=Accent,selectedLabelColor=Color.White,containerColor=AppCard,labelColor=TextMuted),border=FilterChipDefaults.filterChipBorder(enabled=true,selected=filter=="theory",borderColor=AppStroke,selectedBorderColor=Accent))
+    }
+   }
+   items(items=visibleTopics){t:Topic->
+    val all=qs.filter{it.topic==t.title}
+    val filtered=when(filter){"images"->all.filter{it.visual>0};"theory"->all.filter{it.visual==0};else->all}
+    val visualCount=all.count{it.visual>0}
+    val idx=topics.indexOf(t)
+    val tint=topicTint(idx)
+    Card(onClick={onTopic(filtered)},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(17.dp),colors=CardDefaults.cardColors(containerColor=AppCard),border=BorderStroke(1.dp,AppStroke)){
+     Row(Modifier.padding(horizontal=13.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically){
+      Surface(shape=RoundedCornerShape(13.dp),color=tint.copy(alpha=.15f)){
+       Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.padding(10.dp).size(25.dp))
+      }
+      Spacer(Modifier.width(12.dp))
+      Column(Modifier.weight(1f)){
+       Text(t.title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium)
+       Spacer(Modifier.height(2.dp))
+       Text(t.subtitle,color=TextMuted,style=MaterialTheme.typography.bodySmall,maxLines=1)
+       Spacer(Modifier.height(5.dp))
+       Row(verticalAlignment=Alignment.CenterVertically){
+        Text(filtered.size.toString()+" вопросов",color=tint,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.labelMedium)
+        if(visualCount>0&&filter=="all"){Text("  •  "+visualCount+" с картинками",color=TextMuted,style=MaterialTheme.typography.labelSmall)}
+       }
+      }
+      Icon(Icons.Rounded.ChevronRight,null,tint=TextMuted)
+     }
+    }
+   }
+  }
  }
 }
 

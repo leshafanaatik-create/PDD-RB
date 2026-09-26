@@ -849,15 +849,154 @@ fun PhotoSituation(type:Int){
  Surface(
   modifier=Modifier.fillMaxWidth(),
   shape=RoundedCornerShape(16.dp),
-  color=Color(0xFF0F1A2A),
-  border=BorderStroke(1.dp,Color(0xFF243650))
+  color=Color(0xFF0E1724),
+  border=BorderStroke(1.dp,Color(0xFF263A52))
  ){
-  Image(
-   painter=painterResource(R.drawable.scene_premium_intersection),
-   contentDescription="Дорожная ситуация к вопросу",
-   modifier=Modifier.fillMaxWidth().aspectRatio(16f/10f),
-   contentScale=ContentScale.Crop
-  )
+  Canvas(Modifier.fillMaxWidth().aspectRatio(16f/10f)){
+   val w=size.width
+   val h=size.height
+   val asphalt=Color(0xFF39424D)
+   val asphaltDark=Color(0xFF303842)
+   val curb=Color(0xFFCBD0D4)
+   val sidewalk=Color(0xFFB9B2A5)
+   val grass=Color(0xFF718F51)
+   val white=Color(0xFFF5F5EE)
+   val yellow=Color(0xFFFFD84A)
+   val red=Color(0xFFE83C43)
+   val blue=Color(0xFF2F78D4)
+   val green=Color(0xFF29D17D)
+
+   drawRect(grass)
+
+   // sidewalks and roads
+   drawRect(sidewalk,Offset(0f,h*.28f),Size(w,h*.44f))
+   drawRect(sidewalk,Offset(w*.30f,0f),Size(w*.40f,h))
+   drawRect(asphalt,Offset(0f,h*.34f),Size(w,h*.32f))
+   drawRect(asphalt,Offset(w*.36f,0f),Size(w*.28f,h))
+   drawRect(asphaltDark,Offset(w*.36f,h*.34f),Size(w*.28f,h*.32f))
+
+   // curbs
+   drawLine(curb,Offset(0f,h*.34f),Offset(w*.36f,h*.34f),4f)
+   drawLine(curb,Offset(w*.64f,h*.34f),Offset(w,h*.34f),4f)
+   drawLine(curb,Offset(0f,h*.66f),Offset(w*.36f,h*.66f),4f)
+   drawLine(curb,Offset(w*.64f,h*.66f),Offset(w,h*.66f),4f)
+
+   // lane markings
+   fun dashed(a:Offset,b:Offset,segments:Int=7){
+    for(i in 0 until segments){
+     val t1=i.toFloat()/segments
+     val t2=(i+.48f)/segments
+     val x1=a.x+(b.x-a.x)*t1
+     val y1=a.y+(b.y-a.y)*t1
+     val x2=a.x+(b.x-a.x)*t2
+     val y2=a.y+(b.y-a.y)*t2
+     drawLine(white,Offset(x1,y1),Offset(x2,y2),3f)
+    }
+   }
+   dashed(Offset(0f,h*.50f),Offset(w*.32f,h*.50f),5)
+   dashed(Offset(w*.68f,h*.50f),Offset(w,h*.50f),5)
+   dashed(Offset(w*.50f,0f),Offset(w*.50f,h*.28f),4)
+   dashed(Offset(w*.50f,h*.72f),Offset(w*.50f,h),4)
+
+   // zebra crossings
+   fun zebraHorizontal(y:Float,x0:Float,x1:Float){
+    val stripes=8
+    val gap=(x1-x0)/stripes
+    for(i in 0 until stripes step 2){
+     drawRect(white,Offset(x0+i*gap,y),Size(gap*.75f,h*.035f))
+    }
+   }
+   fun zebraVertical(x:Float,y0:Float,y1:Float){
+    val stripes=8
+    val gap=(y1-y0)/stripes
+    for(i in 0 until stripes step 2){
+     drawRect(white,Offset(x,y0+i*gap),Size(w*.022f,gap*.75f))
+    }
+   }
+   zebraHorizontal(h*.285f,w*.38f,w*.62f)
+   zebraHorizontal(h*.68f,w*.38f,w*.62f)
+   zebraVertical(w*.325f,h*.37f,h*.63f)
+   zebraVertical(w*.655f,h*.37f,h*.63f)
+
+   // vehicle helper
+   fun car(cx:Float,cy:Float,color:Color,vertical:Boolean,num:String){
+    val cw=if(vertical)w*.085f else w*.145f
+    val ch=if(vertical)h*.15f else h*.085f
+    drawRoundRect(Color(0x66000000),Offset(cx-cw/2+5f,cy-ch/2+6f),Size(cw,ch),CornerRadius(12f))
+    drawRoundRect(color,Offset(cx-cw/2,cy-ch/2),Size(cw,ch),CornerRadius(12f))
+    if(vertical){
+     drawRoundRect(Color(0xFFBBD7EA),Offset(cx-cw*.28f,cy-ch*.20f),Size(cw*.56f,ch*.25f),CornerRadius(5f))
+     drawRoundRect(Color(0xFF7EA5C1),Offset(cx-cw*.28f,cy+ch*.02f),Size(cw*.56f,ch*.20f),CornerRadius(5f))
+    }else{
+     drawRoundRect(Color(0xFFBBD7EA),Offset(cx-cw*.18f,cy-ch*.28f),Size(cw*.36f,ch*.56f),CornerRadius(5f))
+    }
+    drawCircle(Color.White,w*.024f,Offset(cx+cw*.42f,cy-ch*.43f))
+    val p=androidx.compose.ui.graphics.Path().apply{
+     moveTo(cx+cw*.42f-w*.008f,cy-ch*.43f-h*.006f)
+     lineTo(cx+cw*.42f+w*.008f,cy-ch*.43f-h*.006f)
+     lineTo(cx+cw*.42f+w*.008f,cy-ch*.43f+h*.006f)
+     lineTo(cx+cw*.42f-w*.008f,cy-ch*.43f+h*.006f)
+     close()
+    }
+    drawPath(p,Color.Transparent)
+    // number is represented by a compact badge; text is shown by position/color in the question
+   }
+
+   // traffic light helper
+   fun light(x:Float,y:Float,go:Boolean){
+    drawRoundRect(Color(0xFF171A20),Offset(x,y),Size(w*.035f,h*.13f),CornerRadius(7f))
+    drawCircle(if(go)Color(0xFF633038) else red,w*.009f,Offset(x+w*.0175f,y+h*.028f))
+    drawCircle(Color(0xFF6A5A2A),w*.009f,Offset(x+w*.0175f,y+h*.065f))
+    drawCircle(if(go)green else Color(0xFF1F513D),w*.009f,Offset(x+w*.0175f,y+h*.102f))
+   }
+   light(w*.68f,h*.24f,false)
+   light(w*.30f,h*.63f,true)
+   light(w*.59f,h*.02f,true)
+
+   // priority sign
+   val sx=w*.715f; val sy=h*.29f; val s=w*.032f
+   val sign=androidx.compose.ui.graphics.Path().apply{
+    moveTo(sx,sy-s);lineTo(sx+s,sy);lineTo(sx,sy+s);lineTo(sx-s,sy);close()
+   }
+   drawPath(sign,Color.White)
+   val sign2=androidx.compose.ui.graphics.Path().apply{
+    moveTo(sx,sy-s*.72f);lineTo(sx+s*.72f,sy);lineTo(sx,sy+s*.72f);lineTo(sx-s*.72f,sy);close()
+   }
+   drawPath(sign2,yellow)
+
+   // cars
+   car(w*.50f,h*.82f,Color(0xFFD63D45),true,"1")
+   car(w*.82f,h*.50f,blue,false,"2")
+   car(w*.50f,h*.16f,Color(0xFF343A43),true,"3")
+
+   // trajectory arrows
+   fun arrow(a:Offset,b:Offset,color:Color,stroke:Float=8f){
+    drawLine(color,a,b,stroke)
+    val dx=b.x-a.x; val dy=b.y-a.y
+    val len=kotlin.math.sqrt(dx*dx+dy*dy).coerceAtLeast(1f)
+    val ux=dx/len; val uy=dy/len
+    val px=-uy; val py=ux
+    val ah=18f
+    val p=androidx.compose.ui.graphics.Path().apply{
+     moveTo(b.x,b.y)
+     lineTo(b.x-ux*ah+px*ah*.55f,b.y-uy*ah+py*ah*.55f)
+     lineTo(b.x-ux*ah-px*ah*.55f,b.y-uy*ah-py*ah*.55f)
+     close()
+    }
+    drawPath(p,color)
+   }
+   arrow(Offset(w*.50f,h*.70f),Offset(w*.33f,h*.52f),red)
+   arrow(Offset(w*.75f,h*.50f),Offset(w*.58f,h*.50f),blue)
+   arrow(Offset(w*.50f,h*.27f),Offset(w*.50f,h*.40f),green)
+
+   // vignette
+   drawRect(
+    brush=Brush.verticalGradient(
+     listOf(Color(0x22000000),Color.Transparent,Color.Transparent,Color(0x33000000))
+    ),
+    size=size
+   )
+  }
  }
 }
 

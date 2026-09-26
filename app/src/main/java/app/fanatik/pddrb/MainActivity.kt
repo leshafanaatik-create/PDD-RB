@@ -7,6 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -126,7 +129,7 @@ class MainActivity:ComponentActivity(){
   item{Card(onClick=onExam,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFF7354B2))){Row(Modifier.padding(20.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("Экзамен",color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text("10 случайных вопросов",color=Color(0xFFE8DEFF))};Text("→",color=Color.White,style=MaterialTheme.typography.headlineMedium)}}}
   item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){Card(onClick=onTopics,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("📚",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.height(8.dp));Text("По темам",fontWeight=FontWeight.Bold);Text("Разобрать правила",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}};Card(onClick=onErrors,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("🎯",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.height(8.dp));Text("Ошибки",fontWeight=FontWeight.Bold);Text("Добить слабые места",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}}}}
   item{Card(onClick=onImages,modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=86.dp),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFE9F7EF))){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text("Ситуации с картинками",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text("Отдельная тестовая категория • новый визуал",color=Color(0xFF52645A),style=MaterialTheme.typography.bodyMedium)};Text("→",style=MaterialTheme.typography.headlineSmall)}}}
-  item{Text("Прогресс сохраняется на устройстве",style=MaterialTheme.typography.labelMedium,color=Color.Gray,modifier=Modifier.padding(top=8.dp))}
+  item{Card(onClick=onImages,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFEAF7EE))){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column{Text("Ситуации с картинками",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text("Отдельный тест новых визуальных задач",style=MaterialTheme.typography.bodyMedium,color=Color(0xFF5E655F))}}}}\n  item{Text("Прогресс сохраняется на устройстве",style=MaterialTheme.typography.labelMedium,color=Color.Gray,modifier=Modifier.padding(top=8.dp))}
  }
 }
 
@@ -172,7 +175,7 @@ class MainActivity:ComponentActivity(){
 
 @Composable fun PhotoSituation(type:Int){
  Card(modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){
-  Image(painter=painterResource(id=R.drawable.scene_intersection),contentDescription="Дорожная ситуация к вопросу",modifier=Modifier.fillMaxWidth().height(245.dp),contentScale=ContentScale.Crop)
+  Image(painter=painterResource(id=when(type){101->R.drawable.scene_intersection;102->R.drawable.scene_lane;else->R.drawable.scene_crosswalk}),contentDescription="Дорожная ситуация к вопросу",modifier=Modifier.fillMaxWidth().height(245.dp),contentScale=ContentScale.Crop)
  }
 }
 

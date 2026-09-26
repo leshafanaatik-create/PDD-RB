@@ -696,7 +696,10 @@ fun TopicScreen(
 }
 
 @Composable
-fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:Int,onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit){
+fun QuestionView(
+ q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:Int,
+ onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit
+){
  var answer by remember(q){mutableStateOf<Int?>(null)}
  var quip by remember(q){mutableStateOf<String?>(null)}
  LaunchedEffect(quip){
@@ -707,62 +710,86 @@ fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:I
  }
  val isWrong=answer!=null && answer!=q.correct
  val isCorrect=answer!=null && answer==q.correct
+ val bottomPad=if(answer!=null)94.dp else 28.dp
 
  Box(Modifier.fillMaxSize().background(AppBg)){
   LazyColumn(
    Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal=14.dp),
-   contentPadding=PaddingValues(top=8.dp,bottom=30.dp),
-   verticalArrangement=Arrangement.spacedBy(10.dp)
+   contentPadding=PaddingValues(top=8.dp,bottom=bottomPad),
+   verticalArrangement=Arrangement.spacedBy(9.dp)
   ){
    item{
-    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+    Row(
+     Modifier.fillMaxWidth(),
+     verticalAlignment=Alignment.CenterVertically
+    ){
      IconButton(onClick=onBack,modifier=Modifier.size(38.dp)){
       Icon(Icons.Rounded.ArrowBack,null,tint=TextPrimary,modifier=Modifier.size(22.dp))
      }
      Spacer(Modifier.weight(1f))
      Text(
       "Вопрос "+(index+1)+" из "+total,
-      color=Color(0xFFD0D6E3),
-      fontWeight=FontWeight.Bold,
-      style=MaterialTheme.typography.labelLarge
+      color=Color(0xFFD5DAE5),
+      fontWeight=FontWeight.ExtraBold,
+      fontSize=14.sp
      )
      Spacer(Modifier.weight(1f))
      IconButton(onClick={},modifier=Modifier.size(38.dp)){
-      Icon(Icons.Rounded.FavoriteBorder,null,tint=TextMuted,modifier=Modifier.size(21.dp))
+      Icon(Icons.Rounded.FavoriteBorder,null,tint=Color(0xFF77869B),modifier=Modifier.size(21.dp))
      }
     }
    }
+
    item{
     LinearProgressIndicator(
      progress={(index+1).toFloat()/total.coerceAtLeast(1)},
-     modifier=Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(4.dp)),
-     color=Color(0xFF8A5BFF),
-     trackColor=Color(0xFF223149)
+     modifier=Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(4.dp)),
+     color=Color(0xFF8B5CFF),
+     trackColor=Color(0xFF202D42)
     )
    }
+
+   item{
+    Surface(
+     shape=RoundedCornerShape(9.dp),
+     color=Color(0xFF17152A),
+     border=BorderStroke(1.dp,Color(0xFF312755))
+    ){
+     Text(
+      q.topic,
+      color=Color(0xFFB59CFF),
+      fontWeight=FontWeight.ExtraBold,
+      fontSize=12.sp,
+      modifier=Modifier.padding(horizontal=10.dp,vertical=6.dp)
+     )
+    }
+   }
+
    if(q.visual==101)item{PhotoSituation(q.visual)}
+
    item{
     Text(
      q.text,
      color=TextPrimary,
-     fontSize=22.sp,
-     lineHeight=28.sp,
+     fontSize=19.sp,
+     lineHeight=25.sp,
      fontWeight=FontWeight.Black
     )
    }
+
    items(q.answers.size){i->
     val selected=answer==i
     val correct=answer!=null&&i==q.correct
     val wrong=answer!=null&&selected&&i!=q.correct
     val bg=when{
-     correct->Color(0xFF0A482F)
-     wrong->Color(0xFF49202A)
-     else->Color(0xFF0F1A2A)
+     correct->Color(0xFF0D3C2C)
+     wrong->Color(0xFF3A1D27)
+     else->Color(0xFF0D1827)
     }
     val stroke=when{
      correct->Good
      wrong->Bad
-     else->Color(0xFF203149)
+     else->Color(0xFF1D2F45)
     }
     Surface(
      onClick={
@@ -776,82 +803,79 @@ fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:I
      modifier=Modifier.fillMaxWidth(),
      shape=RoundedCornerShape(14.dp),
      color=bg,
-     border=BorderStroke(if(correct||wrong)2.dp else 1.dp,stroke)
+     border=BorderStroke(if(correct||wrong)1.8.dp else 1.dp,stroke)
     ){
      Row(
-      Modifier.padding(horizontal=13.dp,vertical=12.dp),
+      Modifier.padding(horizontal=12.dp,vertical=11.dp),
       verticalAlignment=Alignment.CenterVertically
      ){
       Box(
-       Modifier.size(29.dp).clip(CircleShape).background(
+       Modifier.size(28.dp).clip(CircleShape).background(
         when{
          correct->Good
          wrong->Bad
-         else->Color(0xFF18283E)
+         else->Color(0xFF17283D)
         }
        ),
        contentAlignment=Alignment.Center
       ){
        Text(
         when{correct->"✓";wrong->"×";else->(i+1).toString()},
-        color=if(correct||wrong)Color.White else Color(0xFFA5B1C3),
+        color=if(correct||wrong)Color.White else Color(0xFF9AA9BD),
         fontWeight=FontWeight.Black,
-        style=MaterialTheme.typography.labelLarge
+        fontSize=13.sp
        )
       }
-      Spacer(Modifier.width(11.dp))
+      Spacer(Modifier.width(10.dp))
       Text(
        q.answers[i],
        color=TextPrimary,
-       fontSize=17.sp,
-       lineHeight=23.sp,
+       fontSize=16.sp,
+       lineHeight=21.sp,
        fontWeight=FontWeight.SemiBold,
        modifier=Modifier.weight(1f)
       )
      }
     }
    }
+
    if(isWrong){
     item{
      Surface(
       shape=RoundedCornerShape(15.dp),
-      color=Color(0xFF321923),
-      border=BorderStroke(1.dp,Color(0xFF6F2B3D))
+      color=Color(0xFF24161E),
+      border=BorderStroke(1.dp,Color(0xFF603046))
      ){
-      Column(Modifier.padding(13.dp),verticalArrangement=Arrangement.spacedBy(9.dp)){
+      Column(Modifier.padding(13.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
        Row(verticalAlignment=Alignment.CenterVertically){
-        Surface(shape=CircleShape,color=Bad.copy(alpha=.18f)){
-         Icon(Icons.Rounded.Close,null,tint=Bad,modifier=Modifier.padding(5.dp).size(16.dp))
+        Surface(shape=CircleShape,color=Bad.copy(alpha=.16f)){
+         Icon(Icons.Rounded.Close,null,tint=Bad,modifier=Modifier.padding(5.dp).size(15.dp))
         }
         Spacer(Modifier.width(8.dp))
-        Text("Неверно",color=Bad,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleSmall)
+        Text("Разберём ошибку",color=Color(0xFFFF8590),fontWeight=FontWeight.Black,fontSize=14.sp)
        }
        Text(
         q.explanation,
-        color=Color(0xFFD5DCE6),
-        fontSize=15.sp,
-        lineHeight=21.sp
+        color=Color(0xFFD0D7E2),
+        fontSize=14.sp,
+        lineHeight=19.sp
        )
-       Surface(shape=RoundedCornerShape(10.dp),color=Color(0xFF0B432D)){
-        Column(Modifier.fillMaxWidth().padding(horizontal=11.dp,vertical=9.dp)){
-         Text("Правильный ответ",color=Good,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelSmall)
-         Spacer(Modifier.height(2.dp))
-         Text(q.answers[q.correct],color=Color.White,fontWeight=FontWeight.Bold,fontSize=16.sp,lineHeight=21.sp)
+       Row(
+        Modifier
+         .fillMaxWidth()
+         .clip(RoundedCornerShape(10.dp))
+         .background(Color(0xFF0C392A))
+         .padding(horizontal=11.dp,vertical=9.dp),
+        verticalAlignment=Alignment.Top
+       ){
+        Icon(Icons.Rounded.CheckCircle,null,tint=Good,modifier=Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Column{
+         Text("Правильный ответ",color=Good,fontWeight=FontWeight.Bold,fontSize=11.sp)
+         Text(q.answers[q.correct],color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp,lineHeight=18.sp)
         }
        }
       }
-     }
-    }
-   }
-   if(answer!=null){
-    item{
-     Button(
-      onClick=onNext,
-      modifier=Modifier.fillMaxWidth().height(50.dp),
-      shape=RoundedCornerShape(13.dp),
-      colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF744CFF))
-     ){
-      Text(if(index+1<total)"Дальше  →" else "Завершить",fontWeight=FontWeight.Black,fontSize=16.sp)
      }
     }
    }
@@ -866,8 +890,8 @@ fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:I
     .statusBarsPadding()
     .padding(start=14.dp,end=14.dp,top=6.dp)
   ){
-   val bannerColor=if(isCorrect)Color(0xF018342A) else Color(0xF02B1C27)
-   val bannerStroke=if(isCorrect)Good.copy(alpha=.55f) else Bad.copy(alpha=.45f)
+   val bannerColor=if(isCorrect)Color(0xF0142E26) else Color(0xF02A1822)
+   val bannerStroke=if(isCorrect)Good.copy(alpha=.55f) else Bad.copy(alpha=.50f)
    val bannerIcon=if(isCorrect)Icons.Rounded.LocalFireDepartment else Icons.Rounded.Warning
    val bannerTint=if(isCorrect)Orange else Bad
    Surface(
@@ -877,21 +901,54 @@ fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:I
     shadowElevation=14.dp
    ){
     Row(
-     Modifier.fillMaxWidth().padding(horizontal=13.dp,vertical=10.dp),
+     Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=9.dp),
      verticalAlignment=Alignment.CenterVertically
     ){
      Surface(shape=CircleShape,color=bannerTint.copy(alpha=.14f)){
-      Icon(bannerIcon,null,tint=bannerTint,modifier=Modifier.padding(6.dp).size(18.dp))
+      Icon(bannerIcon,null,tint=bannerTint,modifier=Modifier.padding(5.dp).size(17.dp))
      }
-     Spacer(Modifier.width(9.dp))
+     Spacer(Modifier.width(8.dp))
      Text(
       quip?:"",
       color=TextPrimary,
       fontWeight=FontWeight.Bold,
-      fontSize=14.sp,
-      lineHeight=18.sp,
+      fontSize=13.sp,
+      lineHeight=17.sp,
       modifier=Modifier.weight(1f)
      )
+    }
+   }
+  }
+
+  AnimatedVisibility(
+   visible=answer!=null,
+   enter=fadeIn(),
+   exit=fadeOut(),
+   modifier=Modifier.align(Alignment.BottomCenter)
+  ){
+   Surface(
+    color=Color(0xF8050B13),
+    shadowElevation=18.dp,
+    border=BorderStroke(1.dp,Color(0xFF18263A))
+   ){
+    Box(
+     Modifier
+      .fillMaxWidth()
+      .navigationBarsPadding()
+      .padding(horizontal=14.dp,vertical=10.dp)
+    ){
+     Button(
+      onClick=onNext,
+      modifier=Modifier.fillMaxWidth().height(50.dp),
+      shape=RoundedCornerShape(14.dp),
+      colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF7857FF))
+     ){
+      Text(
+       if(index+1<total)"Дальше  →" else "Завершить",
+       fontWeight=FontWeight.Black,
+       fontSize=16.sp
+      )
+     }
     }
    }
   }

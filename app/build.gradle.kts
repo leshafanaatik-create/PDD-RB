@@ -11,8 +11,8 @@ android {
         minSdk = 26
         targetSdk = 35
         multiDexEnabled = true
-        versionCode = 18
-        versionName = "0.13.2"
+        versionCode = 19
+        versionName = "0.13.3"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

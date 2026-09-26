@@ -10,6 +10,7 @@ android {
         applicationId = "app.fanatik.pddrb"
         minSdk = 26
         targetSdk = 35
+        multiDexEnabled = true
         versionCode = 13
         versionName = "0.11.0"
     }

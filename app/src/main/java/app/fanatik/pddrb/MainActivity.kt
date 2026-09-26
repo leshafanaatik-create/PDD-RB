@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +21,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Offset
@@ -97,7 +100,7 @@ class MainActivity:ComponentActivity(){
  fun next(){if(index+1<pool.size){index++;current=pool[index]}else screen="home"}
  Surface(Modifier.fillMaxSize(),color=Color(0xFFFCF8FF)){
   when(screen){
-   "home"->HomeScreen(xp,streak,{screen="topics"},{start(alternatingExam())},{screen="errors"})
+   "home"->HomeScreen(xp,streak,{screen="topics"},{start(alternatingExam())},{screen="errors"},{start(qs.filter{it.visual>=100})})
    "topics"->TopicScreen({screen="home"}){start(qs.filter{q->q.topic==it.title})}
    "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{screen="home"},{ok->
     if(ok){correctCount++;streak++;xp+=10+(streak.coerceAtMost(10));mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
@@ -114,7 +117,7 @@ class MainActivity:ComponentActivity(){
  }
 }
 
-@Composable fun HomeScreen(xp:Int,streak:Int,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit){
+@Composable fun HomeScreen(xp:Int,streak:Int,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onImages:()->Unit){
  val rank=rankFor(xp);val next=nextRank(xp)
  LazyColumn(Modifier.fillMaxSize().padding(horizontal=18.dp),contentPadding=PaddingValues(top=30.dp,bottom=28.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Column{Text("ПДД РБ",style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Black);Text("DENIS EDITION",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.Bold)};Spacer(Modifier.weight(1f));Surface(shape=RoundedCornerShape(16.dp),color=Color(0xFFEEE7FF)){Text("🔥 $streak",Modifier.padding(horizontal=14.dp,vertical=10.dp),fontWeight=FontWeight.Bold)}}}
@@ -122,6 +125,7 @@ class MainActivity:ComponentActivity(){
   item{Text("Продолжить подготовку",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=5.dp))}
   item{Card(onClick=onExam,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFF7354B2))){Row(Modifier.padding(20.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("Экзамен",color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text("10 случайных вопросов",color=Color(0xFFE8DEFF))};Text("→",color=Color.White,style=MaterialTheme.typography.headlineMedium)}}}
   item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){Card(onClick=onTopics,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("📚",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.height(8.dp));Text("По темам",fontWeight=FontWeight.Bold);Text("Разобрать правила",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}};Card(onClick=onErrors,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("🎯",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.height(8.dp));Text("Ошибки",fontWeight=FontWeight.Bold);Text("Добить слабые места",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}}}}
+  item{Card(onClick=onImages,modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=86.dp),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFE9F7EF))){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text("Ситуации с картинками",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text("Отдельная тестовая категория • новый визуал",color=Color(0xFF52645A),style=MaterialTheme.typography.bodyMedium)};Text("→",style=MaterialTheme.typography.headlineSmall)}}}
   item{Text("Прогресс сохраняется на устройстве",style=MaterialTheme.typography.labelMedium,color=Color.Gray,modifier=Modifier.padding(top=8.dp))}
  }
 }
@@ -144,7 +148,7 @@ class MainActivity:ComponentActivity(){
    item{LinearProgressIndicator(progress={ (index+1).toFloat()/total.coerceAtLeast(1) },modifier=Modifier.fillMaxWidth().height(5.dp))}
    item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(q.topic,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.labelLarge);Spacer(Modifier.weight(1f));Text("✓ $correctCount",color=Good,fontWeight=FontWeight.Bold)}}
    item{Text(q.text,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
-   if(q.visual>0) item{RoadSituation(q.visual)}
+   if(q.visual>0) item{if(q.visual>=100) PhotoSituation(q.visual) else RoadSituation(q.visual)}
    items(q.answers.size){i->
     val a=q.answers[i];val selected=answer==i;val correct=answer!=null&&i==q.correct;val wrong=answer!=null&&selected&&i!=q.correct
     val container=when{correct->GoodBg;wrong->BadBg;else->Color.White};val border=when{correct->Good;wrong->Bad;else->Color(0xFFD3CDD7)}
@@ -164,6 +168,12 @@ class MainActivity:ComponentActivity(){
    Button(onClick={showExplain=false;onNext()},modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(14.dp)){Text(if(index+1<total)"Разобрался, дальше →" else "Завершить")}
   }}
  }}
+}
+
+@Composable fun PhotoSituation(type:Int){
+ Card(modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){
+  Image(painter=painterResource(id=R.drawable.scene_intersection),contentDescription="Дорожная ситуация к вопросу",modifier=Modifier.fillMaxWidth().height(245.dp),contentScale=ContentScale.Crop)
+ }
 }
 
 @Composable fun RoadSituation(type:Int){

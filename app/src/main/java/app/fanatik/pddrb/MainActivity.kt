@@ -246,17 +246,27 @@ private fun NavItem(
 }
 
 @Composable
-private fun BottomNav(selected:String,onHome:()->Unit,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit){
- Surface(color=Color(0xFA07111C),shadowElevation=18.dp,border=BorderStroke(1.dp,Color(0xFF132235))){
+private fun BottomNav(
+ selected:String,
+ onHome:()->Unit,
+ onTopics:()->Unit,
+ onExam:()->Unit,
+ onErrors:()->Unit,
+ onProfile:()->Unit
+){
+ Surface(
+  color=Color(0xFA07111C),
+  shadowElevation=18.dp,
+  border=BorderStroke(1.dp,Color(0xFF132235))
+ ){
   Row(
-   Modifier.fillMaxWidth().navigationBarsPadding().height(58.dp),
+   Modifier.fillMaxWidth().navigationBarsPadding().height(60.dp),
    verticalAlignment=Alignment.CenterVertically
   ){
    NavItem(selected=="home","Главная",Icons.Rounded.Home,onHome,Modifier.weight(1f))
-   NavItem(selected=="topics","Категории",Icons.Rounded.List,onTopics,Modifier.weight(1f))
+   NavItem(selected=="topics","Темы",Icons.Rounded.GridView,onTopics,Modifier.weight(1f))
    NavItem(selected=="exam","Экзамен",Icons.Rounded.School,onExam,Modifier.weight(1f))
-   NavItem(selected=="errors","Ошибки",Icons.Rounded.Error,onErrors,Modifier.weight(1f))
-   NavItem(selected=="profile","Профиль",Icons.Rounded.Person,onProfile,Modifier.weight(1f))
+   NavItem(selected=="profile","Статистика",Icons.Rounded.BarChart,onProfile,Modifier.weight(1f))
   }
  }
 }

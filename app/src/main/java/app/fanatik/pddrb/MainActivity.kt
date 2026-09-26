@@ -112,7 +112,7 @@ class MainActivity:ComponentActivity(){
  var streak by remember{mutableIntStateOf(prefs.getInt("streak",0))}
  var mistakes by remember{mutableStateOf(prefs.getStringSet("mistakes",emptySet())?.toSet()?:emptySet())}
  fun alternatingExam(count:Int=10):List<Question>{
-  val visual=qs.filter{it.visual>0}.shuffled().toMutableList()
+  val visual=qs.filter{it.visual>=100}.shuffled().toMutableList()
   val theory=qs.filter{it.visual==0}.shuffled().toMutableList()
   val result=mutableListOf<Question>()
   repeat(count){
@@ -477,37 +477,106 @@ fun TopicScreen(
  }
 }
 
-@Composable fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:Int,onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit){
+@Composable
+fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:Int,onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit){
  var answer by remember(q){mutableStateOf<Int?>(null)}
  var quip by remember(q){mutableStateOf<String?>(null)}
  var showExplain by remember(q){mutableStateOf(false)}
  LaunchedEffect(quip){if(quip!=null){delay(4000);quip=null}}
- Box(Modifier.fillMaxSize()){
-  LazyColumn(Modifier.fillMaxSize().padding(horizontal=18.dp),contentPadding=PaddingValues(top=8.dp,bottom=24.dp),verticalArrangement=Arrangement.spacedBy(9.dp)){
-   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){TextButton(onBack,contentPadding=PaddingValues(4.dp)){Text("← Выйти")};Spacer(Modifier.weight(1f));Text("${index+1} / $total",fontWeight=FontWeight.Bold)}}
-   item{LinearProgressIndicator(progress={ (index+1).toFloat()/total.coerceAtLeast(1) },modifier=Modifier.fillMaxWidth().height(5.dp))}
-   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(q.topic,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.labelLarge);Spacer(Modifier.weight(1f));Text("✓ $correctCount",color=Good,fontWeight=FontWeight.Bold)}}
-   item{Text(q.text,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
-   if(q.visual>0) item{if(q.visual>=100) PhotoSituation(q.visual) else RoadSituation(q.visual)}
-   items(q.answers.size){i->
-    val a=q.answers[i];val selected=answer==i;val correct=answer!=null&&i==q.correct;val wrong=answer!=null&&selected&&i!=q.correct
-    val container=when{correct->GoodBg;wrong->BadBg;else->Color.White};val border=when{correct->Good;wrong->Bad;else->Color(0xFFD3CDD7)}
-    OutlinedButton(onClick={if(answer==null){answer=i;val ok=i==q.correct;quip=reaction(ok,if(ok)streak+1 else 0);onAnswered(ok);showExplain=!ok}},modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=50.dp),shape=RoundedCornerShape(14.dp),colors=ButtonDefaults.outlinedButtonColors(containerColor=container,contentColor=when{correct->Good;wrong->Bad;else->Color(0xFF352F39)}),border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border),contentPadding=PaddingValues(horizontal=14.dp,vertical=10.dp)){Text((if(correct)"✓  " else if(wrong)"✕  " else "")+a,style=MaterialTheme.typography.bodyLarge,fontWeight=FontWeight.SemiBold)}
+ Box(Modifier.fillMaxSize().background(AppBg)){
+  LazyColumn(
+   Modifier.fillMaxSize().padding(horizontal=16.dp),
+   contentPadding=PaddingValues(top=14.dp,bottom=24.dp),
+   verticalArrangement=Arrangement.spacedBy(10.dp)
+  ){
+   item{
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+     Surface(onClick=onBack,shape=CircleShape,color=AppCard,border=BorderStroke(1.dp,AppStroke)){Icon(Icons.Rounded.ArrowBack,null,tint=TextPrimary,modifier=Modifier.padding(9.dp).size(20.dp))}
+     Spacer(Modifier.weight(1f))
+     Column(horizontalAlignment=Alignment.End){
+      Text("Вопрос "+(index+1)+" из "+total,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelLarge)
+      Text(correctCount.toString()+" правильных",color=Good,style=MaterialTheme.typography.labelMedium)
+     }
+    }
    }
-   answer?.let{ans->if(ans==q.correct){item{Button(onClick=onNext,modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(14.dp)){Text(if(index+1<total)"Дальше →" else "Завершить")}}}}
+   item{LinearProgressIndicator(progress={(index+1).toFloat()/total.coerceAtLeast(1)},modifier=Modifier.fillMaxWidth().height(5.dp),color=Accent,trackColor=AppCard2)}
+   item{
+    Surface(shape=RoundedCornerShape(10.dp),color=Accent.copy(alpha=.13f),border=BorderStroke(1.dp,Accent.copy(alpha=.25f))){
+     Text(q.topic,color=Color(0xFFC8BAFF),fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelLarge,modifier=Modifier.padding(horizontal=10.dp,vertical=6.dp))
+    }
+   }
+   if(q.visual>=100) item{PhotoSituation(q.visual)}
+   item{Text(q.text,color=TextPrimary,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black)}
+   items(q.answers.size){i->
+    val a=q.answers[i]
+    val selected=answer==i
+    val correct=answer!=null&&i==q.correct
+    val wrong=answer!=null&&selected&&i!=q.correct
+    val container=when{correct->GoodBg;wrong->BadBg;else->AppCard}
+    val border=when{correct->Good;wrong->Bad;else->AppStroke}
+    Surface(
+     onClick={if(answer==null){answer=i;val ok=i==q.correct;quip=reaction(ok,if(ok)streak+1 else 0);onAnswered(ok);showExplain=!ok}},
+     modifier=Modifier.fillMaxWidth(),
+     shape=RoundedCornerShape(16.dp),
+     color=container,
+     border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border)
+    ){
+     Row(Modifier.padding(horizontal=14.dp,vertical=14.dp),verticalAlignment=Alignment.CenterVertically){
+      Surface(shape=CircleShape,color=when{correct->Good.copy(alpha=.18f);wrong->Bad.copy(alpha=.18f);else->Color(0xFF1A2A3E)}){
+       Box(Modifier.size(30.dp),contentAlignment=Alignment.Center){
+        Text(
+         when{correct->"✓";wrong->"✕";else->(i+1).toString()},
+         color=when{correct->Good;wrong->Bad;else->TextMuted},
+         fontWeight=FontWeight.Black
+        )
+       }
+      }
+      Spacer(Modifier.width(11.dp))
+      Text(a,color=TextPrimary,style=MaterialTheme.typography.bodyLarge,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f))
+     }
+    }
+   }
+   answer?.let{ans->
+    if(ans==q.correct){
+     item{
+      Button(
+       onClick=onNext,
+       modifier=Modifier.fillMaxWidth().height(54.dp),
+       shape=RoundedCornerShape(16.dp),
+       colors=ButtonDefaults.buttonColors(containerColor=Accent)
+      ){Text(if(index+1<total)"Дальше →" else "Завершить",fontWeight=FontWeight.Bold)}
+     }
+    }
+   }
   }
-  AnimatedVisibility(visible=quip!=null,enter=fadeIn(),exit=fadeOut(),modifier=Modifier.align(Alignment.TopCenter).padding(top=72.dp,start=22.dp,end=22.dp)){
-   Surface(shadowElevation=10.dp,tonalElevation=4.dp,shape=RoundedCornerShape(18.dp),color=Color(0xFF25212A)){Row(Modifier.padding(horizontal=18.dp,vertical=14.dp),verticalAlignment=Alignment.CenterVertically){Text("🔥",style=MaterialTheme.typography.titleLarge);Spacer(Modifier.width(10.dp));Text(quip?:"",color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.bodyLarge)}}
+  AnimatedVisibility(visible=quip!=null,enter=fadeIn(),exit=fadeOut(),modifier=Modifier.align(Alignment.TopCenter).padding(top=72.dp,start=18.dp,end=18.dp)){
+   Surface(shadowElevation=14.dp,shape=RoundedCornerShape(18.dp),color=Color(0xF21A2635),border=BorderStroke(1.dp,AppStroke)){
+    Row(Modifier.padding(horizontal=15.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically){
+     Icon(Icons.Rounded.LocalFireDepartment,null,tint=Orange,modifier=Modifier.size(22.dp));Spacer(Modifier.width(9.dp))
+     Text(quip?:"",color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.bodyMedium)
+    }
+   }
   }
  }
- answer?.let{ans->if(showExplain) Dialog(onDismissRequest={}){
-  Surface(shape=RoundedCornerShape(26.dp),color=Color.White,shadowElevation=18.dp){Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
-   Text("✕ Неверно",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold,color=Bad)
-   Text("Разберём по-простому",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
-   Text(q.explanation,style=MaterialTheme.typography.bodyLarge)
-   Button(onClick={showExplain=false;onNext()},modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(14.dp)){Text(if(index+1<total)"Разобрался, дальше →" else "Завершить")}
-  }}
- }}
+ if(showExplain)Dialog(onDismissRequest={}){
+  Surface(shape=RoundedCornerShape(24.dp),color=Color(0xFF101C2A),border=BorderStroke(1.dp,Color(0xFF3B2732)),shadowElevation=20.dp){
+   Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+    Row(verticalAlignment=Alignment.CenterVertically){
+     Surface(shape=CircleShape,color=Bad.copy(alpha=.15f)){Icon(Icons.Rounded.Close,null,tint=Bad,modifier=Modifier.padding(8.dp).size(20.dp))}
+     Spacer(Modifier.width(10.dp))
+     Column{Text("Неверно",color=Bad,fontWeight=FontWeight.Black,style=MaterialTheme.typography.titleLarge);Text("Разберём ситуацию",color=TextMuted,style=MaterialTheme.typography.bodySmall)}
+    }
+    Text(q.explanation,color=TextPrimary,style=MaterialTheme.typography.bodyLarge)
+    Surface(shape=RoundedCornerShape(14.dp),color=Good.copy(alpha=.11f),border=BorderStroke(1.dp,Good.copy(alpha=.30f))){
+     Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
+      Icon(Icons.Rounded.CheckCircle,null,tint=Good);Spacer(Modifier.width(9.dp))
+      Column{Text("Правильный ответ",color=Good,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelLarge);Text(q.answers[q.correct],color=TextPrimary,fontWeight=FontWeight.Bold)}
+     }
+    }
+    Button(onClick={showExplain=false;onNext()},modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(15.dp),colors=ButtonDefaults.buttonColors(containerColor=Accent)){Text(if(index+1<total)"Разобрался, дальше →" else "Завершить",fontWeight=FontWeight.Bold)}
+   }
+  }
+ }
 }
 
 @Composable fun PhotoSituation(type:Int){

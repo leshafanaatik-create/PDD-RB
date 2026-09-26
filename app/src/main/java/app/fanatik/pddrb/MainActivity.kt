@@ -364,7 +364,7 @@ private fun ProfileHero(xp:Int,streak:Int,solved:Int,accuracy:Int){
     modifier=Modifier
      .align(Alignment.BottomCenter)
      .fillMaxWidth()
-     .padding(horizontal=10.dp,bottom=10.dp),
+     .padding(start=10.dp,end=10.dp,bottom=10.dp),
     shape=RoundedCornerShape(15.dp),
     color=Color(0xD9141B2D),
     border=BorderStroke(1.dp,Color(0x552F3955))

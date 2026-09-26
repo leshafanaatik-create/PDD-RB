@@ -107,6 +107,7 @@ class MainActivity:ComponentActivity(){
 
 @Composable fun App(context:Context){
  var screen by remember{mutableStateOf("home")}
+ var backStack by remember{mutableStateOf(emptyList<String>())}
  var current by remember{mutableStateOf(qs.first())}
  var pool by remember{mutableStateOf(qs)}
  var index by remember{mutableIntStateOf(0)}
@@ -120,6 +121,26 @@ class MainActivity:ComponentActivity(){
  var rightTotal by remember{mutableIntStateOf(prefs.getInt("right_total",0))}
  val accuracy=if(attempts==0)0 else (rightTotal*100/attempts)
 
+ fun navigate(target:String){
+  if(target==screen)return
+  backStack=backStack+screen
+  screen=target
+ }
+ fun goHome(){
+  backStack=emptyList()
+  screen="home"
+ }
+ fun goBack(){
+  if(backStack.isNotEmpty()){
+   screen=backStack.last()
+   backStack=backStack.dropLast(1)
+  }else if(screen!="home"){
+   screen="home"
+  }
+ }
+
+ BackHandler(enabled=screen!="home"){goBack()}
+
  fun alternatingExam(count:Int=10):List<Question>{
   val visual=qs.filter{it.visual==101}.shuffled().toMutableList()
   val theory=qs.filter{it.visual==0}.shuffled().toMutableList()
@@ -131,9 +152,23 @@ class MainActivity:ComponentActivity(){
   }
   return result
  }
- fun start(list:List<Question>){if(list.isEmpty())return;pool=list;index=0;correctCount=0;current=pool.first();screen="question"}
+ fun start(list:List<Question>){
+  if(list.isEmpty())return
+  pool=list
+  index=0
+  correctCount=0
+  current=pool.first()
+  navigate("question")
+ }
  fun startTopic(title:String){start(qs.filter{it.topic==title})}
- fun next(){if(index+1<pool.size){index++;current=pool[index]}else screen="home"}
+ fun next(){
+  if(index+1<pool.size){
+   index++
+   current=pool[index]
+  }else{
+   goHome()
+  }
+ }
 
  Surface(Modifier.fillMaxSize(),color=AppBg){
   when(screen){
@@ -144,32 +179,50 @@ class MainActivity:ComponentActivity(){
      val visual=qs.filter{it.visual==101}.shuffled().take(3)
      start((theory+visual).shuffled())
     },
-    onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"},
-    onImages={start(qs.filter{it.visual==101}.shuffled())},onProfile={screen="profile"},
+    onTopics={navigate("topics")},onExam={start(alternatingExam())},onErrors={navigate("errors")},
+    onImages={start(qs.filter{it.visual==101}.shuffled())},onProfile={navigate("profile")},
     onSigns={startTopic("Дорожные знаки")},onMarking={startTopic("Дорожная разметка")},
     onTraffic={startTopic("Светофор и регулировщик")},
     onIntersections={startTopic("Проезд перекрёстков")},onManeuver={startTopic("Маневрирование")}
    )
    "topics"->TopicScreen(
-    solved=solved,onHome={screen="home"},onTopic={start(it)},onExam={start(alternatingExam())},
-    onErrors={screen="errors"},onProfile={screen="profile"}
+    solved=solved,onHome={goHome()},onTopic={start(it)},onExam={start(alternatingExam())},
+    onErrors={navigate("errors")},onProfile={navigate("profile")}
    )
    "profile"->ProfileScreen(
     xp=xp,streak=streak,mistakes=mistakes.size,
-    onHome={screen="home"},onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"}
+    onHome={goHome()},onTopics={navigate("topics")},onExam={start(alternatingExam())},onErrors={navigate("errors")}
    )
-   "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{screen="home"},{ok->
+   "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{goBack()},{ok->
     attempts++
     solved=solved+current.text
-    if(ok){correctCount++;rightTotal++;streak++;xp+=10+streak.coerceAtMost(10);mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
+    if(ok){
+     correctCount++
+     rightTotal++
+     streak++
+     xp+=10+streak.coerceAtMost(10)
+     mistakes=mistakes-current.text
+    }else{
+     streak=0
+     mistakes=mistakes+current.text
+    }
     prefs.edit()
      .putInt("xp",xp).putInt("streak",streak)
      .putInt("attempts",attempts).putInt("right_total",rightTotal)
      .putStringSet("mistakes",mistakes).putStringSet("solved",solved).apply()
    },{next()})
-   else->ErrorScreen(
+   "errors"->ErrorScreen(
     mistakes=mistakes,onStart={start(qs.filter{mistakes.contains(it.text)})},
-    onHome={screen="home"},onTopics={screen="topics"},onExam={start(alternatingExam())},onProfile={screen="profile"}
+    onHome={goHome()},onTopics={navigate("topics")},onExam={start(alternatingExam())},onProfile={navigate("profile")}
+   )
+   else->HomeScreen(
+    xp=xp,streak=streak,solved=solved.size,accuracy=accuracy,
+    onContinue={start(qs.shuffled().take(10))},
+    onTopics={navigate("topics")},onExam={start(alternatingExam())},onErrors={navigate("errors")},
+    onImages={start(qs.filter{it.visual==101}.shuffled())},onProfile={navigate("profile")},
+    onSigns={startTopic("Дорожные знаки")},onMarking={startTopic("Дорожная разметка")},
+    onTraffic={startTopic("Светофор и регулировщик")},
+    onIntersections={startTopic("Проезд перекрёстков")},onManeuver={startTopic("Маневрирование")}
    )
   }
  }

@@ -174,104 +174,124 @@ private fun BottomNav(selected:String,onHome:()->Unit,onTopics:()->Unit,onExam:(
 
 @Composable
 private fun StatTile(icon:androidx.compose.ui.graphics.vector.ImageVector,value:String,label:String,tint:Color,modifier:Modifier=Modifier){
- Surface(modifier=modifier,shape=RoundedCornerShape(16.dp),color=AppCard2,border=BorderStroke(1.dp,AppStroke)){
-  Row(Modifier.padding(horizontal=12.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically){
-   Icon(icon,null,tint=tint,modifier=Modifier.size(22.dp));Spacer(Modifier.width(9.dp))
-   Column{Text(value,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleMedium);Text(label,color=TextMuted,style=MaterialTheme.typography.labelSmall)}
+ Surface(modifier=modifier,shape=RoundedCornerShape(14.dp),color=Color(0xAA142337),border=BorderStroke(1.dp,AppStroke)){
+  Row(Modifier.padding(horizontal=10.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically){
+   Surface(shape=CircleShape,color=tint.copy(alpha=.13f)){Icon(icon,null,tint=tint,modifier=Modifier.padding(6.dp).size(16.dp))}
+   Spacer(Modifier.width(7.dp))
+   Column{Text(value,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.bodyLarge);Text(label,color=TextMuted,style=MaterialTheme.typography.labelSmall)}
   }
  }
 }
 
 @Composable
 private fun MiniActionCard(title:String,subtitle:String,icon:androidx.compose.ui.graphics.vector.ImageVector,tint:Color,onClick:()->Unit,modifier:Modifier=Modifier){
- Card(onClick=onClick,modifier=modifier,shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=AppCard),border=BorderStroke(1.dp,AppStroke)){
-  Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
-   Surface(shape=RoundedCornerShape(12.dp),color=tint.copy(alpha=.16f)){Icon(icon,null,tint=tint,modifier=Modifier.padding(9.dp).size(23.dp))}
-   Text(title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium)
-   Text(subtitle,color=TextMuted,style=MaterialTheme.typography.bodySmall)
+ Card(onClick=onClick,modifier=modifier,shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=AppCard),border=BorderStroke(1.dp,AppStroke)){
+  Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically){
+   Surface(shape=RoundedCornerShape(12.dp),color=tint.copy(alpha=.16f)){Icon(icon,null,tint=tint,modifier=Modifier.padding(9.dp).size(22.dp))}
+   Spacer(Modifier.width(11.dp))
+   Column(Modifier.weight(1f)){
+    Text(title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleSmall)
+    Text(subtitle,color=TextMuted,style=MaterialTheme.typography.labelMedium)
+   }
+   Icon(Icons.Rounded.ChevronRight,null,tint=TextMuted,modifier=Modifier.size(20.dp))
+  }
+ }
+}
+
+@Composable
+private fun PremiumProfileCard(xp:Int,streak:Int,mistakes:Int){
+ val rank=rankFor(xp);val next=nextRank(xp)
+ Surface(shape=RoundedCornerShape(24.dp),color=Color.Transparent,border=BorderStroke(1.dp,Color(0xFF263A52))){
+  Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF17263B),Color(0xFF111C2C),Color(0xFF10182A))))){
+   Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(11.dp)){
+    Row(verticalAlignment=Alignment.CenterVertically){
+     Surface(shape=CircleShape,color=Color(0xFF5E46B8),border=BorderStroke(1.dp,Color(0xFF8D74FF))){
+      Box(Modifier.size(52.dp),contentAlignment=Alignment.Center){Icon(Icons.Rounded.DirectionsCar,null,tint=Color.White,modifier=Modifier.size(26.dp))}
+     }
+     Spacer(Modifier.width(12.dp))
+     Column(Modifier.weight(1f)){
+      Text(rank.title,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleMedium)
+      Text("Уровень "+(ranks.indexOf(rank)+1),color=TextMuted,style=MaterialTheme.typography.labelLarge)
+     }
+     Surface(shape=RoundedCornerShape(12.dp),color=Accent.copy(alpha=.14f)){Text(xp.toString()+" XP",color=Color(0xFFD2C7FF),fontWeight=FontWeight.ExtraBold,modifier=Modifier.padding(horizontal=10.dp,vertical=7.dp))}
+    }
+    if(next!=null){
+     val progress=((xp-rank.minXp).toFloat()/(next.minXp-rank.minXp)).coerceIn(0f,1f)
+     LinearProgressIndicator(progress={progress},modifier=Modifier.fillMaxWidth().height(6.dp),color=Accent,trackColor=Color(0xFF2A374C))
+    }
+    Row(horizontalArrangement=Arrangement.spacedBy(7.dp)){
+     StatTile(Icons.Rounded.LocalFireDepartment,streak.toString(),"серия",Orange,Modifier.weight(1f))
+     StatTile(Icons.Rounded.CheckCircle,(xp/12).coerceAtLeast(0).toString(),"решено",Good,Modifier.weight(1f))
+     StatTile(Icons.Rounded.Error,mistakes.toString(),"ошибки",Bad,Modifier.weight(1f))
+    }
+   }
+  }
+ }
+}
+
+@Composable
+private fun ContinueHero(onClick:()->Unit){
+ Card(onClick=onClick,shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.Transparent),modifier=Modifier.fillMaxWidth()){
+  Box(Modifier.fillMaxWidth().height(116.dp).background(Brush.horizontalGradient(listOf(Color(0xFF7047FF),Color(0xFF542CF1),Color(0xFF223EAA))))){
+   Image(painter=painterResource(R.drawable.scene_intersection),contentDescription=null,modifier=Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(.50f),contentScale=ContentScale.Crop,alpha=.48f)
+   Box(Modifier.matchParentSize().background(Brush.horizontalGradient(listOf(Color(0xE86E45FF),Color(0xB85631F2),Color(0x11253CB1)))))
+   Row(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=14.dp),verticalAlignment=Alignment.CenterVertically){
+    Surface(shape=RoundedCornerShape(14.dp),color=Color.White.copy(alpha=.15f)){Icon(Icons.Rounded.PlayArrow,null,tint=Color.White,modifier=Modifier.padding(10.dp).size(24.dp))}
+    Spacer(Modifier.width(12.dp))
+    Column(Modifier.weight(1f)){
+     Text("Продолжить обучение",color=Color.White,fontWeight=FontWeight.Black,style=MaterialTheme.typography.titleLarge)
+     Text("Ситуации с картинками • "+qs.count{it.visual>=100}+" новых",color=Color(0xFFE5DEFF),style=MaterialTheme.typography.bodySmall)
+    }
+    Icon(Icons.Rounded.ArrowForward,null,tint=Color.White)
+   }
+  }
+ }
+}
+
+@Composable
+private fun VisualModeCard(onClick:()->Unit){
+ Card(onClick=onClick,shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=AppCard),border=BorderStroke(1.dp,Color(0xFF1A4F4A))){
+  Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
+   Image(painter=painterResource(R.drawable.scene_crosswalk),contentDescription=null,modifier=Modifier.size(width=92.dp,height=66.dp).clip(RoundedCornerShape(14.dp)),contentScale=ContentScale.Crop)
+   Spacer(Modifier.width(12.dp))
+   Column(Modifier.weight(1f)){
+    Text("Ситуации с картинками",color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(3.dp))
+    Text("Отдельный графический режим",color=TextMuted,style=MaterialTheme.typography.bodySmall)
+   }
+   Icon(Icons.Rounded.ArrowForward,null,tint=Good)
   }
  }
 }
 
 @Composable
 fun HomeScreen(xp:Int,streak:Int,mistakes:Int,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onImages:()->Unit,onProfile:()->Unit){
- val rank=rankFor(xp);val next=nextRank(xp)
  Scaffold(containerColor=AppBg,bottomBar={BottomNav("home",{},onTopics,onExam,onErrors,onProfile)}){inner->
   LazyColumn(
-   Modifier.fillMaxSize().padding(inner).padding(horizontal=18.dp),
-   contentPadding=PaddingValues(top=20.dp,bottom=24.dp),
-   verticalArrangement=Arrangement.spacedBy(14.dp)
+   Modifier.fillMaxSize().padding(inner).padding(horizontal=16.dp),
+   contentPadding=PaddingValues(top=14.dp,bottom=16.dp),
+   verticalArrangement=Arrangement.spacedBy(11.dp)
   ){
    item{
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
      Column(Modifier.weight(1f)){
-      Text("ПДД РБ",color=TextPrimary,style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Black)
-      Text("DENIS EDITION",color=Accent,style=MaterialTheme.typography.labelLarge,fontWeight=FontWeight.ExtraBold)
+      Text("ПДД РБ",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black)
+      Text("DENIS EDITION",color=Color(0xFF9B83FF),style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.ExtraBold)
      }
-     IconButton(onClick=onProfile,modifier=Modifier.size(44.dp)){Icon(Icons.Rounded.Settings,"Настройки",tint=TextMuted)}
+     Surface(onClick=onProfile,shape=CircleShape,color=AppCard,border=BorderStroke(1.dp,AppStroke)){Icon(Icons.Rounded.Settings,"Настройки",tint=TextMuted,modifier=Modifier.padding(10.dp).size(21.dp))}
     }
    }
+   item{PremiumProfileCard(xp,streak,mistakes)}
+   item{ContinueHero(onImages)}
    item{
-    Card(shape=RoundedCornerShape(24.dp),colors=CardDefaults.cardColors(containerColor=AppCard),border=BorderStroke(1.dp,AppStroke)){
-     Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(15.dp)){
-      Row(verticalAlignment=Alignment.CenterVertically){
-       Surface(shape=CircleShape,color=Accent.copy(alpha=.20f),border=BorderStroke(1.dp,Accent.copy(alpha=.45f))){
-        Icon(Icons.Rounded.DirectionsCar,null,tint=Color(0xFFC9B8FF),modifier=Modifier.padding(13.dp).size(30.dp))
-       }
-       Spacer(Modifier.width(14.dp))
-       Column(Modifier.weight(1f)){
-        Text(rank.title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge)
-        Text("Уровень "+(ranks.indexOf(rank)+1),color=TextMuted,style=MaterialTheme.typography.bodyMedium)
-       }
-       Text(xp.toString()+" XP",color=Color(0xFFC9B8FF),fontWeight=FontWeight.ExtraBold)
-      }
-      if(next!=null){
-       val progress=((xp-rank.minXp).toFloat()/(next.minXp-rank.minXp)).coerceIn(0f,1f)
-       LinearProgressIndicator(progress={progress},modifier=Modifier.fillMaxWidth().height(7.dp),color=Accent,trackColor=Color(0xFF26374A))
-       Text("Ещё "+(next.minXp-xp)+" XP до следующего уровня",color=TextMuted,style=MaterialTheme.typography.bodySmall)
-      }
-      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-       StatTile(Icons.Rounded.LocalFireDepartment,streak.toString(),"серия",Orange,Modifier.weight(1f))
-       StatTile(Icons.Rounded.CheckCircle,(xp/12).coerceAtLeast(0).toString(),"решено",Good,Modifier.weight(1f))
-       StatTile(Icons.Rounded.Error,mistakes.toString(),"ошибки",Bad,Modifier.weight(1f))
-      }
-     }
-    }
-   }
-   item{
-    Card(onClick=onImages,shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Accent),modifier=Modifier.fillMaxWidth()){
-     Row(Modifier.padding(19.dp),verticalAlignment=Alignment.CenterVertically){
-      Surface(shape=RoundedCornerShape(14.dp),color=Color.White.copy(alpha=.14f)){Icon(Icons.Rounded.PlayArrow,null,tint=Color.White,modifier=Modifier.padding(10.dp).size(28.dp))}
-      Spacer(Modifier.width(14.dp))
-      Column(Modifier.weight(1f)){
-       Text("Продолжить обучение",color=Color.White,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleLarge)
-       Text("Ситуации с картинками • "+qs.count{it.visual>=100}+" новых",color=Color(0xFFE6DEFF),style=MaterialTheme.typography.bodyMedium)
-      }
-      Icon(Icons.Rounded.ArrowForward,null,tint=Color.White)
-     }
-    }
-   }
-   item{
-    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
+    Row(horizontalArrangement=Arrangement.spacedBy(9.dp)){
      MiniActionCard("Экзамен","10 вопросов",Icons.Rounded.School,Color(0xFF56A7FF),onExam,Modifier.weight(1f))
-     MiniActionCard("По темам","Все разделы",Icons.Rounded.MenuBook,Color(0xFFFFA452),onTopics,Modifier.weight(1f))
+     MiniActionCard("По темам","17 разделов",Icons.Rounded.MenuBook,Color(0xFFFFA452),onTopics,Modifier.weight(1f))
     }
    }
+   item{VisualModeCard(onImages)}
    item{
-    Card(onClick=onImages,shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFF0E342E)),border=BorderStroke(1.dp,Color(0xFF1D5B4F))){
-     Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){
-      Surface(shape=RoundedCornerShape(14.dp),color=Good.copy(alpha=.14f)){Icon(Icons.Rounded.Image,null,tint=Good,modifier=Modifier.padding(10.dp).size(26.dp))}
-      Spacer(Modifier.width(13.dp))
-      Column(Modifier.weight(1f)){
-       Text("Ситуации с картинками",color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium)
-       Text("Отдельный графический режим",color=Color(0xFFA9C9C0),style=MaterialTheme.typography.bodySmall)
-      }
-      Icon(Icons.Rounded.ArrowForward,null,tint=Good)
-     }
-    }
-   }
-   item{
-    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
+    Row(horizontalArrangement=Arrangement.spacedBy(9.dp)){
      MiniActionCard("Ошибки","Повторить сложное",Icons.Rounded.Refresh,Bad,onErrors,Modifier.weight(1f))
      MiniActionCard("Статистика","Прогресс обучения",Icons.Rounded.BarChart,Color(0xFF33D2C1),onProfile,Modifier.weight(1f))
     }

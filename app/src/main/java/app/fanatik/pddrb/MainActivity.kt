@@ -125,13 +125,25 @@ class MainActivity:ComponentActivity(){
  Surface(Modifier.fillMaxSize(),color=AppBg){
   when(screen){
    "home"->HomeScreen(xp,streak,mistakes.size,{screen="topics"},{start(alternatingExam())},{screen="errors"},{start(qs.filter{it.visual>=100}.shuffled())},{screen="profile"})
-   "topics"->TopicScreen({screen="home"}){start(qs.filter{q->q.topic==it.title})}
-   "profile"->ProfileScreen(xp,streak,mistakes.size){screen="home"}
+   "topics"->TopicScreen(
+    onHome={screen="home"},
+    onTopic={start(qs.filter{q->q.topic==it.title})},
+    onExam={start(alternatingExam())},
+    onErrors={screen="errors"},
+    onProfile={screen="profile"}
+   )
+   "profile"->ProfileScreen(
+    xp=xp,streak=streak,mistakes=mistakes.size,
+    onHome={screen="home"},onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"}
+   )
    "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{screen="home"},{ok->
     if(ok){correctCount++;streak++;xp+=10+streak.coerceAtMost(10);mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
     prefs.edit().putInt("xp",xp).putInt("streak",streak).putStringSet("mistakes",mistakes).apply()
    },{next()})
-   else->ErrorScreen(mistakes,{screen="home"}){start(qs.filter{mistakes.contains(it.text)})}
+   else->ErrorScreen(
+    mistakes=mistakes,onStart={start(qs.filter{mistakes.contains(it.text)})},
+    onHome={screen="home"},onTopics={screen="topics"},onExam={start(alternatingExam())},onProfile={screen="profile"}
+   )
   }
  }
 }
@@ -142,13 +154,13 @@ class MainActivity:ComponentActivity(){
 )
 
 @Composable
-private fun BottomNav(onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit){
- NavigationBar(containerColor=Color(0xFF091522),tonalElevation=0.dp){
-  NavigationBarItem(selected=true,onClick={},icon={Icon(Icons.Rounded.Home,null)},label={Text("Главная")},colors=NavColors())
-  NavigationBarItem(selected=false,onClick=onTopics,icon={Icon(Icons.Rounded.List,null)},label={Text("Категории")},colors=NavColors())
-  NavigationBarItem(selected=false,onClick=onExam,icon={Icon(Icons.Rounded.School,null)},label={Text("Экзамен")},colors=NavColors())
-  NavigationBarItem(selected=false,onClick=onErrors,icon={Icon(Icons.Rounded.Error,null)},label={Text("Ошибки")},colors=NavColors())
-  NavigationBarItem(selected=false,onClick=onProfile,icon={Icon(Icons.Rounded.Person,null)},label={Text("Профиль")},colors=NavColors())
+private fun BottomNav(selected:String,onHome:()->Unit,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit){
+ NavigationBar(containerColor=Color(0xFF091522),tonalElevation=0.dp,modifier=Modifier.height(72.dp)){
+  NavigationBarItem(selected=selected=="home",onClick=onHome,icon={Icon(Icons.Rounded.Home,null)},label={Text("Главная")},colors=NavColors())
+  NavigationBarItem(selected=selected=="topics",onClick=onTopics,icon={Icon(Icons.Rounded.List,null)},label={Text("Категории")},colors=NavColors())
+  NavigationBarItem(selected=selected=="exam",onClick=onExam,icon={Icon(Icons.Rounded.School,null)},label={Text("Экзамен")},colors=NavColors())
+  NavigationBarItem(selected=selected=="errors",onClick=onErrors,icon={Icon(Icons.Rounded.Error,null)},label={Text("Ошибки")},colors=NavColors())
+  NavigationBarItem(selected=selected=="profile",onClick=onProfile,icon={Icon(Icons.Rounded.Person,null)},label={Text("Профиль")},colors=NavColors())
  }
 }
 
@@ -176,7 +188,7 @@ private fun MiniActionCard(title:String,subtitle:String,icon:androidx.compose.ui
 @Composable
 fun HomeScreen(xp:Int,streak:Int,mistakes:Int,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onImages:()->Unit,onProfile:()->Unit){
  val rank=rankFor(xp);val next=nextRank(xp)
- Scaffold(containerColor=AppBg,bottomBar={BottomNav(onTopics,onExam,onErrors,onProfile)}){inner->
+ Scaffold(containerColor=AppBg,bottomBar={BottomNav("home",{},onTopics,onExam,onErrors,onProfile)}){inner->
   LazyColumn(
    Modifier.fillMaxSize().padding(inner).padding(horizontal=18.dp),
    contentPadding=PaddingValues(top=20.dp,bottom=24.dp),

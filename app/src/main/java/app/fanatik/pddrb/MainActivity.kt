@@ -7,12 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,8 +23,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Offset
@@ -106,7 +100,7 @@ class MainActivity:ComponentActivity(){
  fun next(){if(index+1<pool.size){index++;current=pool[index]}else screen="home"}
  Surface(Modifier.fillMaxSize(),color=Color(0xFFFCF8FF)){
   when(screen){
-   "home"->HomeScreen(xp,streak,{screen="topics"},{start(alternatingExam())},{screen="errors"},{start(qs.filter{it.visual>=100})})
+   "home"->HomeScreen(xp,streak,{screen="topics"},{start(alternatingExam())},{screen="errors"},{start(qs.filter{it.visual>0}.shuffled())})
    "topics"->TopicScreen({screen="home"}){start(qs.filter{q->q.topic==it.title})}
    "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{screen="home"},{ok->
     if(ok){correctCount++;streak++;xp+=10+(streak.coerceAtMost(10));mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
@@ -124,16 +118,14 @@ class MainActivity:ComponentActivity(){
 }
 
 @Composable fun HomeScreen(xp:Int,streak:Int,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onImages:()->Unit){
- val rank=rankFor(xp);val next=nextRank(xp)
+ val rank=rankFor(xp); val next=nextRank(xp)
  LazyColumn(Modifier.fillMaxSize().padding(horizontal=18.dp),contentPadding=PaddingValues(top=30.dp,bottom=28.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Column{Text("ПДД РБ",style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Black);Text("DENIS EDITION",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.Bold)};Spacer(Modifier.weight(1f));Surface(shape=RoundedCornerShape(16.dp),color=Color(0xFFEEE7FF)){Text("🔥 $streak",Modifier.padding(horizontal=14.dp,vertical=10.dp),fontWeight=FontWeight.Bold)}}}
-  item{Card(colors=CardDefaults.cardColors(containerColor=Color(0xFF292331)),shape=RoundedCornerShape(26.dp)){Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Row(verticalAlignment=Alignment.CenterVertically){Surface(shape=RoundedCornerShape(18.dp),color=Color(0xFF7558B5)){Text("Д",Modifier.padding(horizontal=18.dp,vertical=13.dp),color=Color.White,fontWeight=FontWeight.Black,style=MaterialTheme.typography.headlineMedium)};Spacer(Modifier.width(14.dp));Column{Text(rank.title,color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text("$xp XP",color=Color(0xFFD8C9FF),fontWeight=FontWeight.Bold)}};if(next!=null){LinearProgressIndicator(progress={((xp-rank.minXp).toFloat()/(next.minXp-rank.minXp)).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp),color=Color(0xFFB89BFF),trackColor=Color(0xFF4A4254));Text("Ещё ${next.minXp-xp} XP → ${next.title}",color=Color(0xFFCFC7D6),style=MaterialTheme.typography.bodyMedium)}else Text("Максимальный уровень безобразия достигнут.",color=Color(0xFFCFC7D6))}}}
-  item{Text("Продолжить подготовку",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=5.dp))}
-  item{Card(onClick=onExam,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFF7354B2))){Row(Modifier.padding(20.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("Экзамен",color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text("10 случайных вопросов",color=Color(0xFFE8DEFF))};Text("→",color=Color.White,style=MaterialTheme.typography.headlineMedium)}}}
-  item{Card(onClick=onPictures,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column{Text("Ситуации с картинками",fontWeight=FontWeight.Black,style=MaterialTheme.typography.titleLarge);Text("${qs.count{it.visual>0}} графических задач • тестовый раздел",color=MaterialTheme.colorScheme.primary)}}}}
-  item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){Card(onClick=onTopics,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("📚",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.height(8.dp));Text("По темам",fontWeight=FontWeight.Bold);Text("Разобрать правила",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}};Card(onClick=onErrors,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("🎯",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.height(8.dp));Text("Ошибки",fontWeight=FontWeight.Bold);Text("Добить слабые места",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}}}}
-  item{Card(onClick=onImages,modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=86.dp),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFE9F7EF))){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text("Ситуации с картинками",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text("Отдельная тестовая категория • новый визуал",color=Color(0xFF52645A),style=MaterialTheme.typography.bodyMedium)};Text("→",style=MaterialTheme.typography.headlineSmall)}}}
-  item{Card(onClick=onImages,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFEAF7EE))){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column{Text("Ситуации с картинками",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text("Отдельный тест новых визуальных задач",style=MaterialTheme.typography.bodyMedium,color=Color(0xFF5E655F))}}}}\n  item{Text("Прогресс сохраняется на устройстве",style=MaterialTheme.typography.labelMedium,color=Color.Gray,modifier=Modifier.padding(top=8.dp))}
+  item{Card(colors=CardDefaults.cardColors(containerColor=Color(0xFF292331)),shape=RoundedCornerShape(26.dp)){Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Row(verticalAlignment=Alignment.CenterVertically){Surface(shape=RoundedCornerShape(18.dp),color=Color(0xFF7558B5)){Text("Д",Modifier.padding(horizontal=18.dp,vertical=13.dp),color=Color.White,fontWeight=FontWeight.Black,style=MaterialTheme.typography.headlineMedium)};Spacer(Modifier.width(14.dp));Column{Text(rank.title,color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text("$xp XP",color=Color(0xFFD8C9FF),fontWeight=FontWeight.Bold)}};if(next!=null){LinearProgressIndicator(progress={((xp-rank.minXp).toFloat()/(next.minXp-rank.minXp)).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp),color=Color(0xFFB89BFF),trackColor=Color(0xFF4A4254));Text("Ещё ${next.minXp-xp} XP → ${next.title}",color=Color(0xFFCFC7D6),style=MaterialTheme.typography.bodyMedium)}}}}
+  item{Card(onClick=onExam,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFF7354B2))){Row(Modifier.padding(20.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("Экзамен",color=Color.White,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleLarge);Text("10 вопросов • теория + ситуации",color=Color(0xFFE8DEFF))};Text("→",color=Color.White,style=MaterialTheme.typography.headlineMedium)}}}
+  item{Card(onClick=onImages,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFE9F7EF))){Row(Modifier.padding(18.dp),verticalAlignment=Alignment.CenterVertically){Text("🖼️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text("Ситуации с картинками",fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text("${qs.count{it.visual>0}} графических задач • отдельный тест",color=Color(0xFF52645A))};Text("→",style=MaterialTheme.typography.headlineSmall)}}}
+  item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){Card(onClick=onTopics,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("📚",style=MaterialTheme.typography.headlineMedium);Text("По темам",fontWeight=FontWeight.Bold);Text("Разобрать правила",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}};Card(onClick=onErrors,modifier=Modifier.weight(1f),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(18.dp)){Text("🎯",style=MaterialTheme.typography.headlineMedium);Text("Ошибки",fontWeight=FontWeight.Bold);Text("Слабые места",style=MaterialTheme.typography.bodySmall,color=Color.Gray)}}}}
+  item{Text("Прогресс сохраняется на устройстве",style=MaterialTheme.typography.labelMedium,color=Color.Gray)}
  }
 }
 

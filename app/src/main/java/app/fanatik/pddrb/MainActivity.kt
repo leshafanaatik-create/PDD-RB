@@ -117,7 +117,7 @@ class MainActivity:ComponentActivity(){
  val accuracy=if(attempts==0)0 else (rightTotal*100/attempts)
 
  fun alternatingExam(count:Int=10):List<Question>{
-  val visual=qs.filter{it.visual>=100}.shuffled().toMutableList()
+  val visual=qs.filter{it.visual==101}.shuffled().toMutableList()
   val theory=qs.filter{it.visual==0}.shuffled().toMutableList()
   val result=mutableListOf<Question>()
   repeat(count){
@@ -136,7 +136,7 @@ class MainActivity:ComponentActivity(){
    "home"->HomeScreen(
     xp=xp,streak=streak,solved=solved.size,accuracy=accuracy,
     onTopics={screen="topics"},onExam={start(alternatingExam())},onErrors={screen="errors"},
-    onImages={start(qs.filter{it.visual>=100}.shuffled())},onProfile={screen="profile"},
+    onImages={start(qs.filter{it.visual==101}.shuffled())},onProfile={screen="profile"},
     onSigns={startTopic("Дорожные знаки")},onMarking={startTopic("Дорожная разметка")},
     onTraffic={startTopic("Светофор и регулировщик")}
    )
@@ -323,7 +323,7 @@ fun HomeScreen(
        Spacer(Modifier.width(10.dp))
        Column(Modifier.weight(1f)){
         Text("Продолжить обучение",color=Color.White,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.bodyLarge)
-        Text("Ситуации с картинками • "+qs.count{it.visual>=100}+" вопроса",color=Color(0xFFD9D0FF),style=MaterialTheme.typography.labelSmall)
+        Text("Ситуации с картинками • "+qs.count{it.visual==101}+" вопроса",color=Color(0xFFD9D0FF),style=MaterialTheme.typography.labelSmall)
        }
        Icon(Icons.Rounded.ChevronRight,null,tint=Color.White)
       }
@@ -463,7 +463,7 @@ fun TopicScreen(
  var filter by remember{mutableStateOf("all")}
  val visibleTopics=topics.filter{t->
   val list=qs.filter{it.topic==t.title}
-  when(filter){"images"->list.any{it.visual>=100};"theory"->list.any{it.visual==0};else->list.isNotEmpty()}
+  when(filter){"images"->list.any{it.visual==101};"theory"->list.any{it.visual==0};else->list.any{it.visual==0||it.visual==101}}
  }
  Scaffold(containerColor=AppBg,bottomBar={BottomNav("topics",onHome,{},onExam,onErrors,onProfile)}){inner->
   LazyColumn(
@@ -485,9 +485,9 @@ fun TopicScreen(
     }
    }
    items(items=visibleTopics){t:Topic->
-    val all=qs.filter{it.topic==t.title}
+    val all=qs.filter{it.topic==t.title && (it.visual==0 || it.visual==101)}
     val filtered=when(filter){
-     "images"->all.filter{it.visual>=100}
+     "images"->all.filter{it.visual==101}
      "theory"->all.filter{it.visual==0}
      else->all
     }

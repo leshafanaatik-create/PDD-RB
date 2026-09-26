@@ -376,6 +376,25 @@ private fun topicTint(index:Int):Color=listOf(
  Color(0xFF5CA8FF),Color(0xFFA882FF),Color(0xFFFF8C5A),Color(0xFF35C8E7)
 )[index%8]
 
+private fun topicPreviewRes(title:String):Int=when(title){
+ "Дорожные знаки","Светофор и регулировщик","Проезд перекрёстков"->R.drawable.scene_intersection
+ "Дорожная разметка","Маневрирование","Расположение на дороге","Обгон и встречный разъезд"->R.drawable.scene_lane
+ "Пешеходы и переходы","Остановка и стоянка"->R.drawable.scene_crosswalk
+ else->0
+}
+
+@Composable
+private fun FilterPill(text:String,selected:Boolean,onClick:()->Unit){
+ Surface(
+  onClick=onClick,
+  shape=RoundedCornerShape(12.dp),
+  color=if(selected)Accent else AppCard,
+  border=BorderStroke(1.dp,if(selected)Accent else AppStroke)
+ ){
+  Text(text,color=if(selected)Color.White else TextMuted,fontWeight=if(selected)FontWeight.Bold else FontWeight.SemiBold,modifier=Modifier.padding(horizontal=14.dp,vertical=9.dp),style=MaterialTheme.typography.labelLarge)
+ }
+}
+
 @Composable
 fun TopicScreen(
  onHome:()->Unit,onTopic:(List<Question>)->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit
@@ -388,20 +407,23 @@ fun TopicScreen(
  Scaffold(containerColor=AppBg,bottomBar={BottomNav("topics",onHome,{},onExam,onErrors,onProfile)}){inner->
   LazyColumn(
    Modifier.fillMaxSize().padding(inner).padding(horizontal=16.dp),
-   contentPadding=PaddingValues(top=16.dp,bottom=20.dp),
-   verticalArrangement=Arrangement.spacedBy(9.dp)
+   contentPadding=PaddingValues(top=14.dp,bottom=16.dp),
+   verticalArrangement=Arrangement.spacedBy(8.dp)
   ){
    item{
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
-     Column(Modifier.weight(1f)){Text("Категории",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black);Text("Выбери раздел ПДД",color=TextMuted,style=MaterialTheme.typography.bodyMedium)}
-     Icon(Icons.Rounded.Search,null,tint=TextMuted,modifier=Modifier.size(25.dp))
+     Column(Modifier.weight(1f)){
+      Text("Категории",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black)
+      Text("Подготовка по разделам ПДД",color=TextMuted,style=MaterialTheme.typography.bodySmall)
+     }
+     Surface(shape=CircleShape,color=AppCard,border=BorderStroke(1.dp,AppStroke)){Icon(Icons.Rounded.Search,null,tint=TextMuted,modifier=Modifier.padding(10.dp).size(20.dp))}
     }
    }
    item{
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
-     FilterChip(selected=filter=="all",onClick={filter="all"},label={Text("Все")},colors=FilterChipDefaults.filterChipColors(selectedContainerColor=Accent,selectedLabelColor=Color.White,containerColor=AppCard,labelColor=TextMuted),border=FilterChipDefaults.filterChipBorder(enabled=true,selected=filter=="all",borderColor=AppStroke,selectedBorderColor=Accent))
-     FilterChip(selected=filter=="images",onClick={filter="images"},label={Text("С картинками")},colors=FilterChipDefaults.filterChipColors(selectedContainerColor=Accent,selectedLabelColor=Color.White,containerColor=AppCard,labelColor=TextMuted),border=FilterChipDefaults.filterChipBorder(enabled=true,selected=filter=="images",borderColor=AppStroke,selectedBorderColor=Accent))
-     FilterChip(selected=filter=="theory",onClick={filter="theory"},label={Text("Теория")},colors=FilterChipDefaults.filterChipColors(selectedContainerColor=Accent,selectedLabelColor=Color.White,containerColor=AppCard,labelColor=TextMuted),border=FilterChipDefaults.filterChipBorder(enabled=true,selected=filter=="theory",borderColor=AppStroke,selectedBorderColor=Accent))
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
+     FilterPill("Все",filter=="all"){filter="all"}
+     FilterPill("С картинками",filter=="images"){filter="images"}
+     FilterPill("Теория",filter=="theory"){filter="theory"}
     }
    }
    items(items=visibleTopics){t:Topic->
@@ -410,23 +432,44 @@ fun TopicScreen(
     val visualCount=all.count{it.visual>0}
     val idx=topics.indexOf(t)
     val tint=topicTint(idx)
-    Card(onClick={onTopic(filtered)},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(17.dp),colors=CardDefaults.cardColors(containerColor=AppCard),border=BorderStroke(1.dp,AppStroke)){
-     Row(Modifier.padding(horizontal=13.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically){
-      Surface(shape=RoundedCornerShape(13.dp),color=tint.copy(alpha=.15f)){
-       Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.padding(10.dp).size(25.dp))
+    val preview=topicPreviewRes(t.title)
+    Card(
+     onClick={onTopic(filtered)},
+     modifier=Modifier.fillMaxWidth(),
+     shape=RoundedCornerShape(18.dp),
+     colors=CardDefaults.cardColors(containerColor=AppCard),
+     border=BorderStroke(1.dp,AppStroke)
+    ){
+     Row(Modifier.padding(10.dp),verticalAlignment=Alignment.CenterVertically){
+      if(preview!=0){
+       Box{
+        Image(painter=painterResource(preview),contentDescription=null,modifier=Modifier.size(width=88.dp,height=66.dp).clip(RoundedCornerShape(13.dp)),contentScale=ContentScale.Crop)
+        Surface(shape=RoundedCornerShape(8.dp),color=Color(0xCC06101B),modifier=Modifier.align(Alignment.BottomStart).padding(5.dp)){
+         Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.padding(5.dp).size(14.dp))
+        }
+       }
+      }else{
+       Box(Modifier.size(width=88.dp,height=66.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(tint.copy(alpha=.22f),Color(0xFF101A2A)))),contentAlignment=Alignment.Center){
+        Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.size(28.dp))
+       }
       }
       Spacer(Modifier.width(12.dp))
       Column(Modifier.weight(1f)){
-       Text(t.title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium)
-       Spacer(Modifier.height(2.dp))
+       Text(t.title,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleSmall,maxLines=2)
+       Spacer(Modifier.height(3.dp))
        Text(t.subtitle,color=TextMuted,style=MaterialTheme.typography.bodySmall,maxLines=1)
-       Spacer(Modifier.height(5.dp))
+       Spacer(Modifier.height(6.dp))
        Row(verticalAlignment=Alignment.CenterVertically){
-        Text(filtered.size.toString()+" вопросов",color=tint,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.labelMedium)
-        if(visualCount>0&&filter=="all"){Text("  •  "+visualCount+" с картинками",color=TextMuted,style=MaterialTheme.typography.labelSmall)}
+        Surface(shape=RoundedCornerShape(8.dp),color=tint.copy(alpha=.12f)){
+         Text(filtered.size.toString()+" вопросов",color=tint,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium,modifier=Modifier.padding(horizontal=7.dp,vertical=4.dp))
+        }
+        if(visualCount>0&&filter=="all"){
+         Spacer(Modifier.width(6.dp))
+         Text(visualCount.toString()+" с фото",color=TextMuted,style=MaterialTheme.typography.labelSmall)
+        }
        }
       }
-      Icon(Icons.Rounded.ChevronRight,null,tint=TextMuted)
+      Icon(Icons.Rounded.ChevronRight,null,tint=TextMuted,modifier=Modifier.size(22.dp))
      }
     }
    }

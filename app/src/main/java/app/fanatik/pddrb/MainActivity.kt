@@ -1,6 +1,7 @@
 package app.fanatik.pddrb
 
 import android.os.Bundle
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -15,9 +16,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlin.random.Random
 
 data class Topic(val title:String,val subtitle:String)
 data class Question(val topic:String,val text:String,val answers:List<String>,val correct:Int,val explanation:String)
+data class Rank(val minXp:Int,val title:String)
+
+private val ranks=listOf(
+ Rank(0,"Динька пока пассажир"),
+ Rank(60,"Дёня нашёл педали"),
+ Rank(150,"Денчик выехал со двора"),
+ Rank(300,"Петрович уже что-то подозревает"),
+ Rank(500,"Динька приручает перекрёстки"),
+ Rank(800,"Денчик опасно обучаем"),
+ Rank(1200,"Петрович, документы можно не доставать"),
+ Rank(1700,"Дёня пугающе близок к правам"),
+ Rank(2300,"ГАИ проверяет ответы Денчика дважды"),
+ Rank(3000,"Петрович, проезжайте"),
+ Rank(4000,"ДИНЬКА ВЫЕХАЛ. ПРЯЧЬТЕСЬ.")
+)
+private fun rankFor(xp:Int)=ranks.last{xp>=it.minXp}
+private fun nextRank(xp:Int)=ranks.firstOrNull{it.minXp>xp}
+private fun reaction(correct:Boolean,streak:Int):String?{
+ val roll=Random.nextInt(100)
+ if(roll>42 && streak!=5 && streak!=10) return null
+ return when{
+  streak>=10 -> "А ЭТО ТОЧНО ДИНЬКА? 10 подряд. ГАИ напряглось."
+  streak==5 -> "Денчик разогрелся. Пять подряд — подозрительно."
+  correct -> listOf("Опа. Дёня обучаем.","Петрович, это было красиво.","Динька сегодня с мозгами.","ГАИ этот ответ не ожидало.","Денчик нажал не наугад. Уважаем.").random()
+  else -> listOf("Динька… знак буквально перед тобой.","Петрович, автобус пока не отменяем.","Дёня, перечитай. Мы никому не скажем.","Вот и вернулся наш Денчик.","ГАИ облегчённо выдохнуло.").random()
+ }
+}
 
 private val Good=Color(0xFF1B8F4D)
 private val GoodBg=Color(0xFFE8F7EE)
@@ -63,34 +92,43 @@ private val qs=listOf(
 )
 
 class MainActivity:ComponentActivity(){
- override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);setContent{MaterialTheme(colorScheme=lightColorScheme(primary=Color(0xFF6750A4))){App()}}}
+ override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);setContent{MaterialTheme(colorScheme=lightColorScheme(primary=Color(0xFF6750A4))){App(this)}}}
 }
 
-@Composable fun App(){
+@Composable fun App(context:Context){
  var screen by remember{mutableStateOf("home")}
  var current by remember{mutableStateOf(qs.first())}
  var pool by remember{mutableStateOf(qs)}
  var index by remember{mutableIntStateOf(0)}
  var correctCount by remember{mutableIntStateOf(0)}
+ val prefs=remember{context.getSharedPreferences("denis_progress",Context.MODE_PRIVATE)}
+ var xp by remember{mutableIntStateOf(prefs.getInt("xp",0))}
+ var streak by remember{mutableIntStateOf(prefs.getInt("streak",0))}
+ var mistakes by remember{mutableStateOf(prefs.getStringSet("mistakes",emptySet())?.toSet()?:emptySet())}
  fun start(list:List<Question>){pool=if(list.isEmpty())qs else list.shuffled();index=0;correctCount=0;current=pool.first();screen="question"}
  fun next(){if(index+1<pool.size){index++;current=pool[index]}else screen="home"}
  Surface(Modifier.fillMaxSize(),color=Color(0xFFFCF8FF)){
   when(screen){
-   "home"->HomeScreen({screen="topics"},{start(qs.shuffled().take(10))},{screen="errors"})
+   "home"->HomeScreen(xp,streak,{screen="topics"},{start(qs.shuffled().take(10))},{screen="errors"})
    "topics"->TopicScreen({screen="home"}){start(qs.filter{q->q.topic==it.title})}
-   "question"->QuestionView(current,index,pool.size,correctCount,{screen="home"},{if(it)correctCount++},{next()})
+   "question"->QuestionView(current,index,pool.size,correctCount,xp,streak,{screen="home"},{ok->
+    if(ok){correctCount++;streak++;xp+=10+(streak.coerceAtMost(10));mistakes=mistakes-current.text}else{streak=0;mistakes=mistakes+current.text}
+    prefs.edit().putInt("xp",xp).putInt("streak",streak).putStringSet("mistakes",mistakes).apply()
+   },{next()})
    else->Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
     TextButton({screen="home"}){Text("← На главную")}
     Text("Работа над ошибками",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
-    Card{Text("Здесь будут автоматически собираться вопросы, в которых допущены ошибки.",Modifier.padding(18.dp))}
+    val wrong=qs.filter{mistakes.contains(it.text)}
+    if(wrong.isEmpty()) Card{Text("Ошибок пока нет. Подозрительно хорошо, Денчик.",Modifier.padding(18.dp))}
+    else {Text("Накоплено: ${wrong.size}",color=Bad,fontWeight=FontWeight.Bold);Button({start(wrong)},Modifier.fillMaxWidth()){Text("Разобрать ошибки")}}
    }
   }
  }
 }
 
-@Composable fun HomeScreen(onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit){
+@Composable fun HomeScreen(xp:Int,streak:Int,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit){
  LazyColumn(Modifier.fillMaxSize().padding(horizontal=20.dp),contentPadding=PaddingValues(top=42.dp,bottom=30.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
-  item{Text("ПДД РБ",style=MaterialTheme.typography.displaySmall,fontWeight=FontWeight.Bold);Spacer(Modifier.height(5.dp));Text("Подготовка к теоретическому экзамену",style=MaterialTheme.typography.titleMedium,color=Color(0xFF665F6D));Spacer(Modifier.height(22.dp));Card(colors=CardDefaults.cardColors(containerColor=Color(0xFFEDE4FF)),shape=RoundedCornerShape(24.dp)){Column(Modifier.padding(22.dp)){Text("Готов к тренировке?",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);Spacer(Modifier.height(6.dp));Text("16 вопросов • 16 тем • объяснения после ответа")}}}
+  item{Text("ПДД РБ",style=MaterialTheme.typography.displaySmall,fontWeight=FontWeight.Bold);Spacer(Modifier.height(5.dp));Text("Denis Edition",style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.Bold);Spacer(Modifier.height(18.dp));val rank=rankFor(xp);val next=nextRank(xp);Card(colors=CardDefaults.cardColors(containerColor=Color(0xFFEDE4FF)),shape=RoundedCornerShape(24.dp)){Column(Modifier.padding(22.dp)){Text(rank.title,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);Spacer(Modifier.height(8.dp));Text("$xp XP   🔥 серия: $streak");Spacer(Modifier.height(10.dp));if(next!=null){val base=rank.minXp;LinearProgressIndicator(progress={((xp-base).toFloat()/(next.minXp-base)).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp));Spacer(Modifier.height(6.dp));Text("До следующего безобразия: ${next.minXp-xp} XP",style=MaterialTheme.typography.labelMedium)}else Text("Финальный уровень. Дороги официально в опасности.")}}}
   item{Button(onTopics,Modifier.fillMaxWidth().height(58.dp),shape=RoundedCornerShape(18.dp)){Text("Учить по темам",style=MaterialTheme.typography.titleMedium)}}
   item{Button(onExam,Modifier.fillMaxWidth().height(58.dp),shape=RoundedCornerShape(18.dp)){Text("Экзамен • 10 вопросов",style=MaterialTheme.typography.titleMedium)}}
   item{OutlinedButton(onErrors,Modifier.fillMaxWidth().height(56.dp),shape=RoundedCornerShape(18.dp)){Text("Работа над ошибками")}}
@@ -105,8 +143,9 @@ class MainActivity:ComponentActivity(){
  }
 }
 
-@Composable fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit){
+@Composable fun QuestionView(q:Question,index:Int,total:Int,correctCount:Int,xp:Int,streak:Int,onBack:()->Unit,onAnswered:(Boolean)->Unit,onNext:()->Unit){
  var answer by remember(q){mutableStateOf<Int?>(null)}
+ var quip by remember(q){mutableStateOf<String?>(null)}
  LazyColumn(Modifier.fillMaxSize().padding(horizontal=20.dp),contentPadding=PaddingValues(top=14.dp,bottom=28.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
   item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){TextButton(onBack){Text("← Выйти")};Spacer(Modifier.weight(1f));Text("${index+1} / $total",fontWeight=FontWeight.SemiBold)}}
   item{LinearProgressIndicator(progress={ (index+1).toFloat()/total.coerceAtLeast(1) },modifier=Modifier.fillMaxWidth().height(7.dp))}
@@ -115,10 +154,11 @@ class MainActivity:ComponentActivity(){
   items(q.answers.size){i->
    val a=q.answers[i];val selected=answer==i;val correct=answer!=null&&i==q.correct;val wrong=answer!=null&&selected&&i!=q.correct
    val container=when{correct->GoodBg;wrong->BadBg;else->Color.Transparent};val border=when{correct->Good;wrong->Bad;else->Color(0xFF817984)}
-   OutlinedButton(onClick={if(answer==null){answer=i;onAnswered(i==q.correct)}},modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=62.dp),shape=RoundedCornerShape(18.dp),colors=ButtonDefaults.outlinedButtonColors(containerColor=container,contentColor=when{correct->Good;wrong->Bad;else->MaterialTheme.colorScheme.primary}),border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border),contentPadding=PaddingValues(horizontal=18.dp,vertical=14.dp)){Text((if(correct)"✓ " else if(wrong)"✕ " else "")+a,style=MaterialTheme.typography.titleMedium)}
+   OutlinedButton(onClick={if(answer==null){answer=i;val ok=i==q.correct;quip=reaction(ok,if(ok)streak+1 else 0);onAnswered(ok)}},modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=62.dp),shape=RoundedCornerShape(18.dp),colors=ButtonDefaults.outlinedButtonColors(containerColor=container,contentColor=when{correct->Good;wrong->Bad;else->MaterialTheme.colorScheme.primary}),border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border),contentPadding=PaddingValues(horizontal=18.dp,vertical=14.dp)){Text((if(correct)"✓ " else if(wrong)"✕ " else "")+a,style=MaterialTheme.typography.titleMedium)}
   }
   answer?.let{ans->
    item{Card(colors=CardDefaults.cardColors(containerColor=if(ans==q.correct)GoodBg else BadBg),shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp)){Text(if(ans==q.correct)"Правильно" else "Неверно",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=if(ans==q.correct)Good else Bad);Spacer(Modifier.height(6.dp));Text(q.explanation,style=MaterialTheme.typography.bodyLarge)}}}
+   quip?.let{msg->item{Card(colors=CardDefaults.cardColors(containerColor=Color(0xFFFFF1C9)),shape=RoundedCornerShape(18.dp)){Text(msg,Modifier.padding(16.dp),fontWeight=FontWeight.Bold)}}}
    item{Button(onNext,Modifier.fillMaxWidth().height(56.dp),shape=RoundedCornerShape(18.dp)){Text(if(index+1<total)"Следующий вопрос →" else "Завершить")}}
   }
  }

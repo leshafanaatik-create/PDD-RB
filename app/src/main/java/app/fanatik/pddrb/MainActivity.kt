@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,12 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 
 data class Topic(val title:String,val subtitle:String)
-data class Question(val topic:String,val text:String,val answers:List<String>,val correct:Int,val explanation:String)
+data class Question(val topic:String,val text:String,val answers:List<String>,val correct:Int,val explanation:String,val visual:Int=0)
 data class Rank(val minXp:Int,val title:String)
 
 private val ranks=listOf(
@@ -88,7 +93,11 @@ private val qs=listOf(
  Question("Внешние световые приборы","В тёмное время суток на движущемся автомобиле должны быть включены…",listOf("Предусмотренные ПДД внешние световые приборы","Только аварийная сигнализация","Только габаритные огни во всех случаях","Освещение салона"),0,"В тёмное время суток водитель обязан использовать соответствующие внешние световые приборы."),
  Question("Перевозка людей и грузов","Груз на автомобиле должен размещаться так, чтобы…",listOf("Не ограничивать обзор и не создавать опасности","Закрывать регистрационный знак","Выступать в любую сторону без обозначения","Мешать управлению, если поездка короткая"),0,"Размещение груза не должно ухудшать обзор, затруднять управление или создавать опасность участникам движения."),
  Question("Техническое состояние","Кто отвечает за контроль технического состояния автомобиля перед поездкой?",listOf("Только пассажир","Водитель в пределах установленных обязанностей","Любой пешеход","Только другой водитель"),1,"Перед участием в дорожном движении водитель должен убедиться, что транспортное средство соответствует требованиям безопасности."),
- Question("Первая помощь","При ДТП в первую очередь необходимо оценить…",listOf("Стоимость ремонта","Безопасность места происшествия и состояние пострадавших","Марку автомобилей","Кто снимал происшествие"),1,"До оказания помощи важно исключить дополнительную опасность, оценить состояние пострадавших и организовать вызов экстренных служб.")
+ Question("Первая помощь","При ДТП в первую очередь необходимо оценить…",listOf("Стоимость ремонта","Безопасность места происшествия и состояние пострадавших","Марку автомобилей","Кто снимал происшествие"),1,"Просто: сначала убедись, что место безопасно, затем проверь пострадавших и вызывай помощь. Ремонт и разбор виновных — потом."),
+ Question("Проезд перекрёстков","Вы подъезжаете к равнозначному перекрёстку. Синий автомобиль находится справа. Кто должен проехать первым?",listOf("Ваш красный автомобиль","Синий автомобиль","Кто быстрее","Оба одновременно"),1,"Просто: на равнозначном перекрёстке смотри направо. Машина справа имеет преимущество — значит, красный автомобиль пропускает синюю.",1),
+ Question("Светофор и регулировщик","Вам горит красный сигнал светофора. Можно ли продолжить движение прямо?",listOf("Да, если никого нет","Нет","Да, если быстро","Только ночью"),1,"Просто: красный — стой. То, что дорога пустая, ничего не меняет. Продолжать движение можно только когда разрешит сигнал или регулировщик.",2),
+ Question("Дорожные знаки","Перед перекрёстком установлен знак «Уступить дорогу». Что от вас требуется?",listOf("Обязательно остановиться в любом случае","Уступить тем, кто имеет преимущество","Проехать первым","Только снизить скорость"),1,"Просто: этот знак не требует всегда останавливаться. Нужно пропустить транспорт, которому вы можете помешать. Если уступать некому — после оценки обстановки едете дальше.",3),
+ Question("Маневрирование","Красный автомобиль перестраивается в соседнюю полосу, по которой уже едет синий. Кто имеет преимущество?",listOf("Красный","Синий","Кто включил поворотник первым","Преимущества нет"),1,"Просто: меняешь полосу — пропускаешь того, кто уже по ней едет. Поворотник показывает намерение, но преимущества не даёт.",4)
 )
 
 class MainActivity:ComponentActivity(){
@@ -151,15 +160,35 @@ class MainActivity:ComponentActivity(){
   item{LinearProgressIndicator(progress={ (index+1).toFloat()/total.coerceAtLeast(1) },modifier=Modifier.fillMaxWidth().height(7.dp))}
   item{Row(Modifier.fillMaxWidth()){Text(q.topic,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.SemiBold);Spacer(Modifier.weight(1f));Text("✓ $correctCount",color=Good,fontWeight=FontWeight.Bold)}}
   item{Text(q.text,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.SemiBold)}
+  if(q.visual>0) item{RoadSituation(q.visual)}
   items(q.answers.size){i->
    val a=q.answers[i];val selected=answer==i;val correct=answer!=null&&i==q.correct;val wrong=answer!=null&&selected&&i!=q.correct
    val container=when{correct->GoodBg;wrong->BadBg;else->Color.Transparent};val border=when{correct->Good;wrong->Bad;else->Color(0xFF817984)}
    OutlinedButton(onClick={if(answer==null){answer=i;val ok=i==q.correct;quip=reaction(ok,if(ok)streak+1 else 0);onAnswered(ok)}},modifier=Modifier.fillMaxWidth().defaultMinSize(minHeight=62.dp),shape=RoundedCornerShape(18.dp),colors=ButtonDefaults.outlinedButtonColors(containerColor=container,contentColor=when{correct->Good;wrong->Bad;else->MaterialTheme.colorScheme.primary}),border=BorderStroke(if(correct||wrong)2.dp else 1.dp,border),contentPadding=PaddingValues(horizontal=18.dp,vertical=14.dp)){Text((if(correct)"✓ " else if(wrong)"✕ " else "")+a,style=MaterialTheme.typography.titleMedium)}
   }
   answer?.let{ans->
-   item{Card(colors=CardDefaults.cardColors(containerColor=if(ans==q.correct)GoodBg else BadBg),shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp)){Text(if(ans==q.correct)"Правильно" else "Неверно",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=if(ans==q.correct)Good else Bad);Spacer(Modifier.height(6.dp));Text(q.explanation,style=MaterialTheme.typography.bodyLarge)}}}
+   item{Card(colors=CardDefaults.cardColors(containerColor=if(ans==q.correct)GoodBg else BadBg),shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp)){Text(if(ans==q.correct)"Правильно" else "Неверно",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=if(ans==q.correct)Good else Bad);Spacer(Modifier.height(6.dp));Text("Почему?",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold);Spacer(Modifier.height(5.dp));Text(q.explanation,style=MaterialTheme.typography.bodyLarge)}}}
    quip?.let{msg->item{Card(colors=CardDefaults.cardColors(containerColor=Color(0xFFFFF1C9)),shape=RoundedCornerShape(18.dp)){Text(msg,Modifier.padding(16.dp),fontWeight=FontWeight.Bold)}}}
    item{Button(onNext,Modifier.fillMaxWidth().height(56.dp),shape=RoundedCornerShape(18.dp)){Text(if(index+1<total)"Следующий вопрос →" else "Завершить")}}
+  }
+ }
+}
+
+
+@Composable fun RoadSituation(type:Int){
+ Card(modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp)){
+  Canvas(Modifier.fillMaxWidth().height(230.dp).background(Color(0xFFE8E4DA))){
+   val w=size.width;val h=size.height;val road=Color(0xFF55585C);val white=Color.White
+   if(type==1||type==3){
+    drawRect(road,Offset(w*.38f,0f),Size(w*.24f,h));drawRect(road,Offset(0f,h*.38f),Size(w,h*.24f))
+    drawLine(white,Offset(w*.5f,0f),Offset(w*.5f,h*.34f),5f);drawLine(white,Offset(w*.5f,h*.66f),Offset(w*.5f,h),5f)
+    if(type==1){drawRect(Color(0xFFD74343),Offset(w*.43f,h*.69f),Size(w*.14f,h*.18f));drawRect(Color(0xFF3979D6),Offset(w*.68f,h*.43f),Size(w*.18f,h*.14f))}
+    else {drawRect(Color(0xFFD74343),Offset(w*.43f,h*.69f),Size(w*.14f,h*.18f));drawCircle(Color.White,22f,Offset(w*.66f,h*.69f));val p=Path();p.moveTo(w*.66f-18,h*.69f-12);p.lineTo(w*.66f+18,h*.69f-12);p.lineTo(w*.66f,h*.69f+20);p.close();drawPath(p,Color(0xFFE5C542))}
+   } else {
+    drawRect(road,Offset(0f,h*.25f),Size(w,h*.5f));drawLine(white,Offset(0f,h*.5f),Offset(w,h*.5f),5f)
+    if(type==2){drawRect(Color(0xFFD74343),Offset(w*.18f,h*.55f),Size(w*.2f,h*.13f));drawRect(Color(0xFF222222),Offset(w*.72f,h*.08f),Size(w*.10f,h*.30f));drawCircle(Color(0xFFE53935),18f,Offset(w*.77f,h*.14f));drawCircle(Color(0xFF555555),18f,Offset(w*.77f,h*.23f));drawCircle(Color(0xFF555555),18f,Offset(w*.77f,h*.32f))}
+    else {drawRect(Color(0xFFD74343),Offset(w*.24f,h*.55f),Size(w*.2f,h*.13f));drawRect(Color(0xFF3979D6),Offset(w*.56f,h*.32f),Size(w*.2f,h*.13f))}
+   }
   }
  }
 }

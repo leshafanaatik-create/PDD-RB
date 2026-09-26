@@ -393,13 +393,13 @@ private fun ProfileScreen(
     Card(colors=CardDefaults.cardColors(containerColor=AppCard),shape=RoundedCornerShape(22.dp),border=BorderStroke(1.dp,AppStroke)){
      Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
       Row(verticalAlignment=Alignment.CenterVertically){
-       Surface(shape=CircleShape,color=Accent.copy(alpha=.2f)){Icon(Icons.Rounded.DirectionsCar,null,tint=Color(0xFFC9B8FF),modifier=Modifier.padding(14.dp).size(32.dp))}
+       Surface(shape=RoundedCornerShape(14.dp),color=Color(0xFF211B3C)){Image(painter=painterResource(R.drawable.ic_den_cat),contentDescription=null,modifier=Modifier.size(56.dp).padding(3.dp))}
        Spacer(Modifier.width(14.dp))
        Column(Modifier.weight(1f)){Text(rank.title,color=TextPrimary,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.titleMedium);Text(xp.toString()+" XP",color=TextMuted)}
       }
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-       StatTile(Icons.Rounded.LocalFireDepartment,streak.toString(),"серия",Orange,Modifier.weight(1f))
-       StatTile(Icons.Rounded.Error,mistakes.toString(),"ошибки",Bad,Modifier.weight(1f))
+       HomeStat(Icons.Rounded.LocalFireDepartment,streak.toString(),"серия",Orange,Modifier.weight(1f))
+       HomeStat(Icons.Rounded.Error,mistakes.toString(),"ошибки",Bad,Modifier.weight(1f))
       }
      }
     }

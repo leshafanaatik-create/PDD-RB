@@ -265,48 +265,110 @@ private fun BottomNav(selected:String,onHome:()->Unit,onTopics:()->Unit,onExam:(
 private fun HomeStat(
  icon:androidx.compose.ui.graphics.vector.ImageVector,value:String,label:String,tint:Color,modifier:Modifier=Modifier
 ){
- Column(modifier=modifier,horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(2.dp)){
+ Column(
+  modifier=modifier,
+  horizontalAlignment=Alignment.CenterHorizontally,
+  verticalArrangement=Arrangement.spacedBy(1.dp)
+ ){
   Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)){
    Icon(icon,null,tint=tint,modifier=Modifier.size(16.dp))
-   Text(value,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.bodyMedium)
+   Text(value,color=TextPrimary,fontWeight=FontWeight.Black,fontSize=16.sp)
   }
-  Text(label,color=TextMuted,style=MaterialTheme.typography.labelSmall,maxLines=1)
+  Text(label,color=Color(0xFF98A5B8),fontSize=11.sp,fontWeight=FontWeight.Medium,maxLines=1)
  }
 }
 
 @Composable
-private fun ProfileHero(xp:Int){
- val rank=rankFor(xp); val next=nextRank(xp)
+private fun ProfileHero(xp:Int,streak:Int,solved:Int,accuracy:Int){
+ val rank=rankFor(xp)
+ val next=nextRank(xp)
  val maxXp=next?.minXp ?: xp.coerceAtLeast(1)
  val progress=if(next==null)1f else ((xp-rank.minXp).toFloat()/(maxXp-rank.minXp)).coerceIn(0f,1f)
+
  Surface(
-  shape=RoundedCornerShape(22.dp),
-  color=Color(0xFF0D1727),
-  border=BorderStroke(1.dp,Color(0xFF1A2940))
+  shape=RoundedCornerShape(24.dp),
+  color=Color(0xFF10172A),
+  border=BorderStroke(1.dp,Color(0xFF242B45)),
+  shadowElevation=8.dp
  ){
-  Row(Modifier.height(122.dp).padding(12.dp),verticalAlignment=Alignment.CenterVertically){
-   Box(
-    Modifier.width(112.dp).fillMaxHeight().clip(RoundedCornerShape(18.dp))
-      .background(Brush.verticalGradient(listOf(Color(0xFF2D214C),Color(0xFF171529)))),
-    contentAlignment=Alignment.BottomCenter
-   ){
-    Image(
-     painter=painterResource(R.drawable.mascot_den),
-     contentDescription="Динька",
-     modifier=Modifier.fillMaxSize(),
-     contentScale=ContentScale.Crop
+  Box(
+   Modifier
+    .fillMaxWidth()
+    .height(214.dp)
+    .background(
+     Brush.linearGradient(
+      listOf(Color(0xFF251941),Color(0xFF111A2D),Color(0xFF0E1726))
+     )
     )
-   }
-   Spacer(Modifier.width(12.dp))
-   Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(7.dp)){
-    Text(rank.title,color=TextPrimary,fontWeight=FontWeight.Black,style=MaterialTheme.typography.titleMedium,maxLines=2)
-    Text("Уровень "+(ranks.indexOf(rank)+1),color=Color(0xFFB6C0D0),style=MaterialTheme.typography.bodySmall)
+  ){
+   // Большой маскот — главный визуальный акцент, как в утверждённом макете.
+   Image(
+    painter=painterResource(R.drawable.mascot_den),
+    contentDescription="Динька",
+    modifier=Modifier
+     .fillMaxHeight()
+     .fillMaxWidth(.49f)
+     .align(Alignment.CenterStart),
+    contentScale=ContentScale.Crop
+   )
+
+   // Мягко растворяем изображение в карточке вместо отдельной квадратной аватарки.
+   Box(
+    Modifier
+     .fillMaxHeight()
+     .fillMaxWidth(.62f)
+     .align(Alignment.CenterStart)
+     .background(
+      Brush.horizontalGradient(
+       0f to Color.Transparent,
+       .52f to Color(0x3310182A),
+       1f to Color(0xFF10182A)
+      )
+     )
+   )
+
+   Column(
+    Modifier
+     .align(Alignment.TopEnd)
+     .fillMaxWidth(.57f)
+     .padding(top=18.dp,end=16.dp,start=6.dp),
+    verticalArrangement=Arrangement.spacedBy(5.dp)
+   ){
+    Text("Динька",color=Color.White,fontWeight=FontWeight.Black,fontSize=23.sp)
+    Text(rank.title,color=Color(0xFFB7A8FF),fontWeight=FontWeight.Bold,fontSize=13.sp,maxLines=2)
+    Spacer(Modifier.height(2.dp))
+    Text("Уровень "+(ranks.indexOf(rank)+1),color=Color(0xFFC0C8D7),fontSize=13.sp)
     LinearProgressIndicator(
      progress={progress},
-     modifier=Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)),
-     color=Color(0xFF8B5CFF),trackColor=Color(0xFF24314A)
+     modifier=Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(6.dp)),
+     color=Color(0xFF9A57FF),
+     trackColor=Color(0xFF2B314B)
     )
-    Text(xp.toString()+" / "+maxXp+" XP",color=TextMuted,style=MaterialTheme.typography.labelSmall)
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){
+     Text(xp.toString()+" XP",color=Color.White,fontWeight=FontWeight.ExtraBold,fontSize=13.sp)
+     Text(maxXp.toString()+" XP",color=Color(0xFF8895A9),fontSize=12.sp)
+    }
+   }
+
+   Surface(
+    modifier=Modifier
+     .align(Alignment.BottomCenter)
+     .fillMaxWidth()
+     .padding(horizontal=10.dp,bottom=10.dp),
+    shape=RoundedCornerShape(15.dp),
+    color=Color(0xD9141B2D),
+    border=BorderStroke(1.dp,Color(0x552F3955))
+   ){
+    Row(
+     Modifier.fillMaxWidth().padding(vertical=10.dp,horizontal=6.dp),
+     verticalAlignment=Alignment.CenterVertically
+    ){
+     HomeStat(Icons.Rounded.LocalFireDepartment,streak.toString(),"Серия",Orange,Modifier.weight(1f))
+     Box(Modifier.width(1.dp).height(30.dp).background(Color(0xFF2B3449)))
+     HomeStat(Icons.Rounded.CheckCircle,solved.toString(),"Решено",Good,Modifier.weight(1f))
+     Box(Modifier.width(1.dp).height(30.dp).background(Color(0xFF2B3449)))
+     HomeStat(Icons.Rounded.TrackChanges,accuracy.toString()+"%","Точность",Bad,Modifier.weight(1f))
+    }
    }
   }
  }

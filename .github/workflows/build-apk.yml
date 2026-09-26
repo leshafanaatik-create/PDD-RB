@@ -15,12 +15,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Prepare Android debug signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
       - name: Build debug APK
         run: gradle :app:assembleDebug
+      - name: Verify APK signature
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk PDD-RB-v0.5.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk PDD-RB-v0.5.1.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: PDD-RB-v0.5.0
-          path: PDD-RB-v0.5.0.apk
+          name: PDD-RB-v0.5.1
+          path: PDD-RB-v0.5.1.apk
           retention-days: 14

@@ -165,24 +165,35 @@ class MainActivity:ComponentActivity(){
  }
 }
 
-@Composable private fun NavColors()=NavigationBarItemDefaults.colors(
- selectedIconColor=Color.White,selectedTextColor=Color.White,indicatorColor=Accent.copy(alpha=.24f),
- unselectedIconColor=TextMuted,unselectedTextColor=TextMuted
-)
+@Composable
+private fun NavItem(
+ selected:Boolean,label:String,icon:androidx.compose.ui.graphics.vector.ImageVector,onClick:()->Unit,modifier:Modifier=Modifier
+){
+ Surface(onClick=onClick,color=Color.Transparent,modifier=modifier){
+  Column(
+   Modifier.fillMaxHeight().padding(top=7.dp),
+   horizontalAlignment=Alignment.CenterHorizontally,
+   verticalArrangement=Arrangement.spacedBy(2.dp)
+  ){
+   Box(Modifier.height(3.dp).width(28.dp).clip(RoundedCornerShape(2.dp)).background(if(selected)Accent else Color.Transparent))
+   Icon(icon,null,tint=if(selected)Color(0xFF9D86FF) else Color(0xFF65758A),modifier=Modifier.size(21.dp))
+   Text(label,color=if(selected)Color(0xFFE5DFFF) else Color(0xFF65758A),fontWeight=if(selected)FontWeight.Bold else FontWeight.Medium,style=MaterialTheme.typography.labelSmall,maxLines=1)
+  }
+ }
+}
 
 @Composable
 private fun BottomNav(selected:String,onHome:()->Unit,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit){
- Surface(color=Color(0xF20A1420),shadowElevation=16.dp){
-  NavigationBar(
-   containerColor=Color.Transparent,
-   tonalElevation=0.dp,
-   windowInsets=NavigationBarDefaults.windowInsets
+ Surface(color=Color(0xFA07111C),shadowElevation=18.dp,border=BorderStroke(1.dp,Color(0xFF132235))){
+  Row(
+   Modifier.fillMaxWidth().navigationBarsPadding().height(58.dp),
+   verticalAlignment=Alignment.CenterVertically
   ){
-   NavigationBarItem(selected=selected=="home",onClick=onHome,icon={Icon(Icons.Rounded.Home,null)},label={Text("Главная")},colors=NavColors())
-   NavigationBarItem(selected=selected=="topics",onClick=onTopics,icon={Icon(Icons.Rounded.List,null)},label={Text("Категории")},colors=NavColors())
-   NavigationBarItem(selected=selected=="exam",onClick=onExam,icon={Icon(Icons.Rounded.School,null)},label={Text("Экзамен")},colors=NavColors())
-   NavigationBarItem(selected=selected=="errors",onClick=onErrors,icon={Icon(Icons.Rounded.Error,null)},label={Text("Ошибки")},colors=NavColors())
-   NavigationBarItem(selected=selected=="profile",onClick=onProfile,icon={Icon(Icons.Rounded.Person,null)},label={Text("Профиль")},colors=NavColors())
+   NavItem(selected=="home","Главная",Icons.Rounded.Home,onHome,Modifier.weight(1f))
+   NavItem(selected=="topics","Категории",Icons.Rounded.List,onTopics,Modifier.weight(1f))
+   NavItem(selected=="exam","Экзамен",Icons.Rounded.School,onExam,Modifier.weight(1f))
+   NavItem(selected=="errors","Ошибки",Icons.Rounded.Error,onErrors,Modifier.weight(1f))
+   NavItem(selected=="profile","Профиль",Icons.Rounded.Person,onProfile,Modifier.weight(1f))
   }
  }
 }

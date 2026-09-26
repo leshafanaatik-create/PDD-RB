@@ -434,51 +434,51 @@ private fun topicTint(index:Int):Color=listOf(
  Color(0xFF5CA8FF),Color(0xFFA882FF),Color(0xFFFF8C5A),Color(0xFF35C8E7)
 )[index%8]
 
-private fun topicPreviewRes(title:String):Int=when(title){
- "Дорожные знаки","Светофор и регулировщик","Проезд перекрёстков"->R.drawable.scene_intersection
- "Дорожная разметка","Маневрирование","Расположение на дороге","Обгон и встречный разъезд"->R.drawable.scene_lane
- "Пешеходы и переходы","Остановка и стоянка"->R.drawable.scene_crosswalk
- else->0
+private fun previewAlignment(index:Int):Alignment=when(index%3){
+ 0->Alignment.CenterStart
+ 1->Alignment.Center
+ else->Alignment.CenterEnd
 }
 
 @Composable
 private fun FilterPill(text:String,selected:Boolean,onClick:()->Unit){
  Surface(
-  onClick=onClick,
-  shape=RoundedCornerShape(12.dp),
-  color=if(selected)Accent else AppCard,
-  border=BorderStroke(1.dp,if(selected)Accent else AppStroke)
+  onClick=onClick,shape=RoundedCornerShape(11.dp),
+  color=if(selected)Accent else Color(0xFF0D1927),
+  border=BorderStroke(1.dp,if(selected)Accent else Color(0xFF1B2B3F))
  ){
-  Text(text,color=if(selected)Color.White else TextMuted,fontWeight=if(selected)FontWeight.Bold else FontWeight.SemiBold,modifier=Modifier.padding(horizontal=14.dp,vertical=9.dp),style=MaterialTheme.typography.labelLarge)
+  Text(
+   text,color=if(selected)Color.White else TextMuted,
+   fontWeight=if(selected)FontWeight.Bold else FontWeight.Medium,
+   modifier=Modifier.padding(horizontal=13.dp,vertical=7.dp),
+   style=MaterialTheme.typography.labelMedium
+  )
  }
 }
 
 @Composable
 fun TopicScreen(
- onHome:()->Unit,onTopic:(List<Question>)->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit
+ solved:Set<String>,onHome:()->Unit,onTopic:(List<Question>)->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit
 ){
  var filter by remember{mutableStateOf("all")}
  val visibleTopics=topics.filter{t->
   val list=qs.filter{it.topic==t.title}
-  when(filter){"images"->list.any{it.visual>0};"theory"->list.any{it.visual==0};else->list.isNotEmpty()}
+  when(filter){"images"->list.any{it.visual>=100};"theory"->list.any{it.visual==0};else->list.isNotEmpty()}
  }
  Scaffold(containerColor=AppBg,bottomBar={BottomNav("topics",onHome,{},onExam,onErrors,onProfile)}){inner->
   LazyColumn(
-   Modifier.fillMaxSize().padding(inner).padding(horizontal=16.dp),
-   contentPadding=PaddingValues(top=14.dp,bottom=16.dp),
-   verticalArrangement=Arrangement.spacedBy(8.dp)
+   Modifier.fillMaxSize().padding(inner).padding(horizontal=14.dp),
+   contentPadding=PaddingValues(top=11.dp,bottom=12.dp),
+   verticalArrangement=Arrangement.spacedBy(7.dp)
   ){
    item{
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
-     Column(Modifier.weight(1f)){
-      Text("Категории",color=TextPrimary,style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black)
-      Text("Подготовка по разделам ПДД",color=TextMuted,style=MaterialTheme.typography.bodySmall)
-     }
-     Surface(shape=CircleShape,color=AppCard,border=BorderStroke(1.dp,AppStroke)){Icon(Icons.Rounded.Search,null,tint=TextMuted,modifier=Modifier.padding(10.dp).size(20.dp))}
+     Text("Категории",color=TextPrimary,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black,modifier=Modifier.weight(1f))
+     IconButton(onClick={},modifier=Modifier.size(36.dp)){Icon(Icons.Rounded.Search,null,tint=TextMuted,modifier=Modifier.size(21.dp))}
     }
    }
    item{
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){
      FilterPill("Все",filter=="all"){filter="all"}
      FilterPill("С картинками",filter=="images"){filter="images"}
      FilterPill("Теория",filter=="theory"){filter="theory"}
@@ -486,48 +486,50 @@ fun TopicScreen(
    }
    items(items=visibleTopics){t:Topic->
     val all=qs.filter{it.topic==t.title}
-    val filtered=when(filter){"images"->all.filter{it.visual>0};"theory"->all.filter{it.visual==0};else->all}
-    val visualCount=all.count{it.visual>0}
+    val filtered=when(filter){
+     "images"->all.filter{it.visual>=100}
+     "theory"->all.filter{it.visual==0}
+     else->all
+    }
+    val solvedCount=filtered.count{solved.contains(it.text)}
+    val pct=if(filtered.isEmpty())0 else solvedCount*100/filtered.size
     val idx=topics.indexOf(t)
     val tint=topicTint(idx)
-    val preview=topicPreviewRes(t.title)
-    Card(
+    Surface(
      onClick={onTopic(filtered)},
      modifier=Modifier.fillMaxWidth(),
-     shape=RoundedCornerShape(18.dp),
-     colors=CardDefaults.cardColors(containerColor=AppCard),
-     border=BorderStroke(1.dp,AppStroke)
+     shape=RoundedCornerShape(14.dp),
+     color=Color(0xFF0D1927),
+     border=BorderStroke(1.dp,Color(0xFF182A3E))
     ){
-     Row(Modifier.padding(10.dp),verticalAlignment=Alignment.CenterVertically){
-      if(preview!=0){
-       Box{
-        Image(painter=painterResource(preview),contentDescription=null,modifier=Modifier.size(width=88.dp,height=66.dp).clip(RoundedCornerShape(13.dp)),contentScale=ContentScale.Crop)
-        Surface(shape=RoundedCornerShape(8.dp),color=Color(0xCC06101B),modifier=Modifier.align(Alignment.BottomStart).padding(5.dp)){
-         Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.padding(5.dp).size(14.dp))
-        }
-       }
-      }else{
-       Box(Modifier.size(width=88.dp,height=66.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(tint.copy(alpha=.22f),Color(0xFF101A2A)))),contentAlignment=Alignment.Center){
-        Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.size(28.dp))
+     Row(Modifier.padding(8.dp),verticalAlignment=Alignment.CenterVertically){
+      Box(Modifier.size(width=76.dp,height=54.dp).clip(RoundedCornerShape(11.dp))){
+       Image(
+        painter=painterResource(R.drawable.scene_premium_intersection),
+        contentDescription=null,
+        modifier=Modifier.matchParentSize(),
+        contentScale=ContentScale.Crop,
+        alignment=previewAlignment(idx)
+       )
+       Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xAA050B13)))))
+       Surface(shape=RoundedCornerShape(7.dp),color=Color(0xCC0A1420),modifier=Modifier.align(Alignment.BottomStart).padding(4.dp)){
+        Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.padding(4.dp).size(13.dp))
        }
       }
-      Spacer(Modifier.width(12.dp))
+      Spacer(Modifier.width(10.dp))
       Column(Modifier.weight(1f)){
-       Text(t.title,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.titleSmall,maxLines=2)
-       Spacer(Modifier.height(3.dp))
-       Text(t.subtitle,color=TextMuted,style=MaterialTheme.typography.bodySmall,maxLines=1)
+       Text(t.title,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.bodyMedium,maxLines=1)
+       Text(filtered.size.toString()+" вопросов",color=TextMuted,style=MaterialTheme.typography.labelSmall)
        Spacer(Modifier.height(6.dp))
-       Row(verticalAlignment=Alignment.CenterVertically){
-        Surface(shape=RoundedCornerShape(8.dp),color=tint.copy(alpha=.12f)){
-         Text(filtered.size.toString()+" вопросов",color=tint,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium,modifier=Modifier.padding(horizontal=7.dp,vertical=4.dp))
-        }
-        if(visualCount>0&&filter=="all"){
-         Spacer(Modifier.width(6.dp))
-         Text(visualCount.toString()+" с фото",color=TextMuted,style=MaterialTheme.typography.labelSmall)
-        }
-       }
+       LinearProgressIndicator(
+        progress={pct/100f},
+        modifier=Modifier.fillMaxWidth().height(4.dp),
+        color=tint,trackColor=Color(0xFF263448)
+       )
       }
-      Icon(Icons.Rounded.ChevronRight,null,tint=TextMuted,modifier=Modifier.size(22.dp))
+      Spacer(Modifier.width(9.dp))
+      Text(pct.toString()+"%",color=if(pct>0)tint else TextMuted,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium)
+      Icon(Icons.Rounded.ChevronRight,null,tint=Color(0xFF607085),modifier=Modifier.size(20.dp))
      }
     }
    }

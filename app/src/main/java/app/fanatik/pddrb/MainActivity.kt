@@ -26,7 +26,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -69,13 +71,13 @@ private fun reaction(correct:Boolean,streak:Int):String?{
  }
 }
 
-private val AppBg=Color(0xFF07111D)
-private val AppSurface=Color(0xFF0D1927)
-private val AppCard=Color(0xFF122132)
-private val AppCard2=Color(0xFF17283B)
-private val AppStroke=Color(0xFF24364A)
-private val Accent=Color(0xFF7C4DFF)
-private val Accent2=Color(0xFF4F6BFF)
+private val AppBg=Color(0xFF050B13)
+private val AppSurface=Color(0xFF09131F)
+private val AppCard=Color(0xFF0E1A29)
+private val AppCard2=Color(0xFF132235)
+private val AppStroke=Color(0xFF1D3045)
+private val Accent=Color(0xFF7857FF)
+private val Accent2=Color(0xFF4169E8)
 private val Good=Color(0xFF22C983)
 private val GoodBg=Color(0xFF103A2D)
 private val Bad=Color(0xFFFF5C68)
@@ -155,12 +157,18 @@ class MainActivity:ComponentActivity(){
 
 @Composable
 private fun BottomNav(selected:String,onHome:()->Unit,onTopics:()->Unit,onExam:()->Unit,onErrors:()->Unit,onProfile:()->Unit){
- NavigationBar(containerColor=Color(0xFF091522),tonalElevation=0.dp,modifier=Modifier.height(72.dp)){
-  NavigationBarItem(selected=selected=="home",onClick=onHome,icon={Icon(Icons.Rounded.Home,null)},label={Text("Главная")},colors=NavColors())
-  NavigationBarItem(selected=selected=="topics",onClick=onTopics,icon={Icon(Icons.Rounded.List,null)},label={Text("Категории")},colors=NavColors())
-  NavigationBarItem(selected=selected=="exam",onClick=onExam,icon={Icon(Icons.Rounded.School,null)},label={Text("Экзамен")},colors=NavColors())
-  NavigationBarItem(selected=selected=="errors",onClick=onErrors,icon={Icon(Icons.Rounded.Error,null)},label={Text("Ошибки")},colors=NavColors())
-  NavigationBarItem(selected=selected=="profile",onClick=onProfile,icon={Icon(Icons.Rounded.Person,null)},label={Text("Профиль")},colors=NavColors())
+ Surface(color=Color(0xF20A1420),shadowElevation=16.dp){
+  NavigationBar(
+   containerColor=Color.Transparent,
+   tonalElevation=0.dp,
+   windowInsets=NavigationBarDefaults.windowInsets
+  ){
+   NavigationBarItem(selected=selected=="home",onClick=onHome,icon={Icon(Icons.Rounded.Home,null)},label={Text("Главная")},colors=NavColors())
+   NavigationBarItem(selected=selected=="topics",onClick=onTopics,icon={Icon(Icons.Rounded.List,null)},label={Text("Категории")},colors=NavColors())
+   NavigationBarItem(selected=selected=="exam",onClick=onExam,icon={Icon(Icons.Rounded.School,null)},label={Text("Экзамен")},colors=NavColors())
+   NavigationBarItem(selected=selected=="errors",onClick=onErrors,icon={Icon(Icons.Rounded.Error,null)},label={Text("Ошибки")},colors=NavColors())
+   NavigationBarItem(selected=selected=="profile",onClick=onProfile,icon={Icon(Icons.Rounded.Person,null)},label={Text("Профиль")},colors=NavColors())
+  }
  }
 }
 

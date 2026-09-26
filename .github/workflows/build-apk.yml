@@ -26,9 +26,9 @@ jobs:
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
           "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk PDD-RB-v0.5.1.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk PDD-RB-v0.6.0.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: PDD-RB-v0.5.1
-          path: PDD-RB-v0.5.1.apk
+          name: PDD-RB-v0.6.0
+          path: PDD-RB-v0.6.0.apk
           retention-days: 14

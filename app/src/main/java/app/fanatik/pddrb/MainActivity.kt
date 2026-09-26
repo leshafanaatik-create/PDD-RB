@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlin.random.Random
@@ -198,9 +199,9 @@ class MainActivity:ComponentActivity(){
    drawRect(lawn)
    fun vehicle(cx:Float,cy:Float,vertical:Boolean,color:Color){
     val cw=if(vertical)w*.105f else w*.205f;val ch=if(vertical)h*.30f else h*.15f
-    drawRoundRect(Color(0x44000000),Offset(cx-cw/2+4,cy-ch/2+5),Size(cw,ch),12f,12f);drawRoundRect(color,Offset(cx-cw/2,cy-ch/2),Size(cw,ch),12f,12f)
-    if(vertical){drawRoundRect(Color(0xFFC9E0EA),Offset(cx-cw*.34f,cy-ch*.27f),Size(cw*.68f,ch*.17f),5f,5f);drawRoundRect(Color(0xFF9FBAC7),Offset(cx-cw*.34f,cy+ch*.09f),Size(cw*.68f,ch*.14f),5f,5f)}
-    else{drawRoundRect(Color(0xFFC9E0EA),Offset(cx-cw*.27f,cy-ch*.34f),Size(cw*.17f,ch*.68f),5f,5f);drawRoundRect(Color(0xFF9FBAC7),Offset(cx+cw*.09f,cy-ch*.34f),Size(cw*.14f,ch*.68f),5f,5f)}
+    drawRoundRect(Color(0x44000000),Offset(cx-cw/2+4,cy-ch/2+5),Size(cw,ch),CornerRadius(12f,12f));drawRoundRect(color,Offset(cx-cw/2,cy-ch/2),Size(cw,ch),CornerRadius(12f,12f))
+    if(vertical){drawRoundRect(Color(0xFFC9E0EA),Offset(cx-cw*.34f,cy-ch*.27f),Size(cw*.68f,ch*.17f),CornerRadius(5f,5f));drawRoundRect(Color(0xFF9FBAC7),Offset(cx-cw*.34f,cy+ch*.09f),Size(cw*.68f,ch*.14f),CornerRadius(5f,5f))}
+    else{drawRoundRect(Color(0xFFC9E0EA),Offset(cx-cw*.27f,cy-ch*.34f),Size(cw*.17f,ch*.68f),CornerRadius(5f,5f));drawRoundRect(Color(0xFF9FBAC7),Offset(cx+cw*.09f,cy-ch*.34f),Size(cw*.14f,ch*.68f),CornerRadius(5f,5f))}
    }
    fun dashed(a:Offset,b:Offset){for(i in 0..7 step 2){val t=i/8f;val u=(i+1)/8f;drawLine(line,Offset(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t),Offset(a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u),3.5f)}}
    if(type==1||type==3){
@@ -211,7 +212,7 @@ class MainActivity:ComponentActivity(){
     else{drawCircle(Color.White,24f,Offset(w*.76f,h*.75f));val p=Path();p.moveTo(w*.76f-18,h*.75f-13);p.lineTo(w*.76f+18,h*.75f-13);p.lineTo(w*.76f,h*.75f+19);p.close();drawPath(p,Color(0xFFF2C94C));drawPath(p,Color(0xFF333333),style=androidx.compose.ui.graphics.drawscope.Stroke(width=3f))}
    }else{
     drawRect(road,Offset(0f,h*.19f),Size(w,h*.62f));dashed(Offset(0f,h*.5f),Offset(w,h*.5f));vehicle(w*.25f,h*.63f,false,Color(0xFFE44B46))
-    if(type==2){drawRoundRect(Color(0xFF25272A),Offset(w*.76f,h*.03f),Size(w*.095f,h*.39f),10f,10f);drawCircle(Color(0xFFE53935),14f,Offset(w*.807f,h*.10f));drawCircle(Color(0xFF55585C),14f,Offset(w*.807f,h*.22f));drawCircle(Color(0xFF55585C),14f,Offset(w*.807f,h*.34f))}
+    if(type==2){drawRoundRect(Color(0xFF25272A),Offset(w*.76f,h*.03f),Size(w*.095f,h*.39f),CornerRadius(10f,10f));drawCircle(Color(0xFFE53935),14f,Offset(w*.807f,h*.10f));drawCircle(Color(0xFF55585C),14f,Offset(w*.807f,h*.22f));drawCircle(Color(0xFF55585C),14f,Offset(w*.807f,h*.34f))}
     else vehicle(w*.67f,h*.37f,false,Color(0xFF397FD5))
    }
   }

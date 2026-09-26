@@ -487,23 +487,17 @@ private fun topicTint(index:Int):Color=listOf(
  Color(0xFF5CA8FF),Color(0xFFA882FF),Color(0xFFFF8C5A),Color(0xFF35C8E7)
 )[index%8]
 
-private fun previewAlignment(index:Int):Alignment=when(index%3){
- 0->Alignment.CenterStart
- 1->Alignment.Center
- else->Alignment.CenterEnd
-}
-
 @Composable
 private fun FilterPill(text:String,selected:Boolean,onClick:()->Unit){
  Surface(
   onClick=onClick,shape=RoundedCornerShape(11.dp),
-  color=if(selected)Accent else Color(0xFF0D1927),
-  border=BorderStroke(1.dp,if(selected)Accent else Color(0xFF1B2B3F))
+  color=if(selected)Color(0xFF744CFF) else Color(0xFF101B2D),
+  border=BorderStroke(1.dp,if(selected)Color(0xFF8A69FF) else Color(0xFF1F2D43))
  ){
   Text(
-   text,color=if(selected)Color.White else TextMuted,
-   fontWeight=if(selected)FontWeight.Bold else FontWeight.Medium,
-   modifier=Modifier.padding(horizontal=13.dp,vertical=7.dp),
+   text,color=if(selected)Color.White else Color(0xFF9EABC0),
+   fontWeight=if(selected)FontWeight.ExtraBold else FontWeight.SemiBold,
+   modifier=Modifier.padding(horizontal=14.dp,vertical=8.dp),
    style=MaterialTheme.typography.labelMedium
   )
  }
@@ -516,29 +510,34 @@ fun TopicScreen(
  var filter by remember{mutableStateOf("all")}
  val visibleTopics=topics.filter{t->
   val list=qs.filter{it.topic==t.title}
-  when(filter){"images"->list.any{it.visual==101};"theory"->list.any{it.visual==0};else->list.any{it.visual==0||it.visual==101}}
+  when(filter){"images"->list.any{it.visual==101};"theory"->list.any{it.visual==0};else->list.isNotEmpty()}
  }
  Scaffold(containerColor=AppBg,bottomBar={BottomNav("topics",onHome,{},onExam,onErrors,onProfile)}){inner->
   LazyColumn(
    Modifier.fillMaxSize().padding(inner).padding(horizontal=14.dp),
-   contentPadding=PaddingValues(top=11.dp,bottom=12.dp),
-   verticalArrangement=Arrangement.spacedBy(7.dp)
+   contentPadding=PaddingValues(top=12.dp,bottom=14.dp),
+   verticalArrangement=Arrangement.spacedBy(8.dp)
   ){
    item{
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
-     Text("Категории",color=TextPrimary,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black,modifier=Modifier.weight(1f))
-     IconButton(onClick={},modifier=Modifier.size(36.dp)){Icon(Icons.Rounded.Search,null,tint=TextMuted,modifier=Modifier.size(21.dp))}
+     Column(Modifier.weight(1f)){
+      Text("Темы ПДД РБ",color=TextPrimary,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Black)
+      Text("Выбери раздел для тренировки",color=TextMuted,style=MaterialTheme.typography.bodySmall)
+     }
+     Surface(shape=RoundedCornerShape(12.dp),color=Color(0xFF111A2C),border=BorderStroke(1.dp,Color(0xFF202D43))){
+      Icon(Icons.Rounded.Search,null,tint=Color(0xFFA8B4C8),modifier=Modifier.padding(9.dp).size(20.dp))
+     }
     }
    }
    item{
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
      FilterPill("Все",filter=="all"){filter="all"}
      FilterPill("С картинками",filter=="images"){filter="images"}
      FilterPill("Теория",filter=="theory"){filter="theory"}
     }
    }
    items(items=visibleTopics){t:Topic->
-    val all=qs.filter{it.topic==t.title && (it.visual==0 || it.visual==101)}
+    val all=qs.filter{it.topic==t.title}
     val filtered=when(filter){
      "images"->all.filter{it.visual==101}
      "theory"->all.filter{it.visual==0}
@@ -549,40 +548,35 @@ fun TopicScreen(
     val idx=topics.indexOf(t)
     val tint=topicTint(idx)
     Surface(
-     onClick={onTopic(filtered)},
+     onClick={if(filtered.isNotEmpty())onTopic(filtered)},
      modifier=Modifier.fillMaxWidth(),
-     shape=RoundedCornerShape(14.dp),
-     color=Color(0xFF0D1927),
-     border=BorderStroke(1.dp,Color(0xFF182A3E))
+     shape=RoundedCornerShape(15.dp),
+     color=Color(0xFF101B2B),
+     border=BorderStroke(1.dp,if(pct>0)tint.copy(alpha=.40f) else Color(0xFF203047))
     ){
-     Row(Modifier.padding(8.dp),verticalAlignment=Alignment.CenterVertically){
-      Box(Modifier.size(width=76.dp,height=54.dp).clip(RoundedCornerShape(11.dp))){
-       Image(
-        painter=painterResource(R.drawable.scene_premium_intersection),
-        contentDescription=null,
-        modifier=Modifier.matchParentSize(),
-        contentScale=ContentScale.Crop,
-        alignment=previewAlignment(idx)
-       )
-       Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color(0xAA050B13)))))
-       Surface(shape=RoundedCornerShape(7.dp),color=Color(0xCC0A1420),modifier=Modifier.align(Alignment.BottomStart).padding(4.dp)){
-        Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.padding(4.dp).size(13.dp))
-       }
+     Row(Modifier.padding(horizontal=10.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically){
+      Box(
+       Modifier.size(52.dp).clip(RoundedCornerShape(12.dp))
+        .background(Brush.linearGradient(listOf(tint.copy(alpha=.34f),Color(0xFF172239)))),
+       contentAlignment=Alignment.Center
+      ){
+       Icon(topicIcon(t.title),null,tint=tint,modifier=Modifier.size(28.dp))
       }
-      Spacer(Modifier.width(10.dp))
-      Column(Modifier.weight(1f)){
-       Text(t.title,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.bodyMedium,maxLines=1)
-       Text(filtered.size.toString()+" вопросов",color=TextMuted,style=MaterialTheme.typography.labelSmall)
-       Spacer(Modifier.height(6.dp))
+      Spacer(Modifier.width(11.dp))
+      Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)){
+       Row(verticalAlignment=Alignment.CenterVertically){
+        Text(t.title,color=TextPrimary,fontWeight=FontWeight.ExtraBold,style=MaterialTheme.typography.bodyMedium,maxLines=1,modifier=Modifier.weight(1f))
+        Text(pct.toString()+"%",color=if(pct>0)Good else TextMuted,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium)
+       }
+       Text(filtered.size.toString()+" "+questionWord(filtered.size),color=TextMuted,style=MaterialTheme.typography.labelSmall)
        LinearProgressIndicator(
         progress={pct/100f},
-        modifier=Modifier.fillMaxWidth().height(4.dp),
-        color=tint,trackColor=Color(0xFF263448)
+        modifier=Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(4.dp)),
+        color=Good,trackColor=Color(0xFF26344A)
        )
       }
-      Spacer(Modifier.width(9.dp))
-      Text(pct.toString()+"%",color=if(pct>0)tint else TextMuted,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium)
-      Icon(Icons.Rounded.ChevronRight,null,tint=Color(0xFF607085),modifier=Modifier.size(20.dp))
+      Spacer(Modifier.width(7.dp))
+      Icon(Icons.Rounded.ChevronRight,null,tint=Color(0xFF78889D),modifier=Modifier.size(20.dp))
      }
     }
    }

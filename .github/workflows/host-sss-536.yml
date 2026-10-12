@@ -1,0 +1,35 @@
+name: Host SSS 5.36.0 Installer
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - sss-host-5.36.0
+    paths:
+      - .github/workflows/host-sss-536.yml
+
+jobs:
+  host:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download installer artifact
+        shell: powershell
+        run: |
+          $url = 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-6454-81f4-b0c9-e6859c58b3df/raw?se=2026-10-12T09%3A36%3A54Z&sp=r&sv=2026-02-06&sr=b&scid=91ea20a3-5beb-5f5b-9b89-0d23e408b93c&skoid=a63e6f05-dc2f-4fa5-b0e3-b1cb9c0893bb&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-12T06%3A22%3A13Z&ske=2026-10-13T06%3A22%3A13Z&sks=b&skv=2026-02-06&sig=7Ddd3ndfBCgy7qkdUpSWsjQOxR0qu1w1QESUiezpvl4%3D'
+          Invoke-WebRequest -Uri $url -OutFile artifact.zip -UseBasicParsing
+          Expand-Archive -LiteralPath artifact.zip -DestinationPath artifact -Force
+          if (-not (Test-Path 'artifact\SSS-Setup.exe')) { throw 'SSS-Setup.exe not found.' }
+          $hash = (Get-FileHash 'artifact\SSS-Setup.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'a9448f0077ada1f377a0861de44780adc38e46160069735de85389c0cd943bc5') {
+            throw "SHA256 mismatch: $hash"
+          }
+
+      - name: Publish public release asset
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "sss-v5.36.0" "artifact\SSS-Setup.exe#SSS-Setup.exe" --repo "${{ github.repository }}" --target "sss-host-5.36.0" --title "SSS 5.36.0" --notes "Single-file Windows installer for SSS 5.36.0."

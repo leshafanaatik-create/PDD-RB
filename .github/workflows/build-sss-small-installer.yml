@@ -1,0 +1,58 @@
+name: Build SSS Small Installer
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - sss-online-installer-5.36.0
+    paths:
+      - sss-online-installer/**
+      - .github/workflows/build-sss-small-installer.yml
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Inno Setup
+        shell: powershell
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup compiler not found."
+          }
+
+      - name: Build small installer
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ".\sss-online-installer\SSS-Installer.iss"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path ".\sss-online-installer\out\SSS-Installer.exe")) {
+            throw "SSS-Installer.exe was not produced."
+          }
+          Get-Item ".\sss-online-installer\out\SSS-Installer.exe" | Select-Object Name,Length
+          Get-FileHash ".\sss-online-installer\out\SSS-Installer.exe" -Algorithm SHA256
+
+      - name: Upload to public release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "sss-v5.36.0" ".\sss-online-installer\out\SSS-Installer.exe#SSS-Installer.exe" --repo "${{ github.repository }}" --clobber
+
+      - name: Upload CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SSS-Installer-small
+          path: sss-online-installer/out/SSS-Installer.exe
+          if-no-files-found: error

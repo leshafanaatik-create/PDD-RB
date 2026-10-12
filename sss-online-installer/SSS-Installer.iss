@@ -47,11 +47,12 @@ begin
   Result := '';
   try
     WizardForm.StatusLabel.Caption := 'Загрузка установочного пакета...';
-    PackagePath := DownloadTemporaryFile(
+    DownloadTemporaryFile(
       PackageUrl,
       'SSS-Setup.exe',
       PackageSha256,
       @DownloadProgress);
+    PackagePath := ExpandConstant('{tmp}\SSS-Setup.exe');
 
     WizardForm.StatusLabel.Caption := 'Запуск установки SSS...';
 

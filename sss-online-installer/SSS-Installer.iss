@@ -1,7 +1,7 @@
 [Setup]
 AppId={{7A9574D3-CCEF-4FF7-9BC1-3C08D9805360}
 AppName=SSS Installer
-AppVersion=5.36.0
+AppVersion=5.36.1
 AppPublisher=GMK
 DefaultDirName={tmp}\SSS-Installer
 CreateAppDir=no
@@ -32,10 +32,14 @@ begin
   if ProgressMax > 0 then
   begin
     Percent := (Progress * 100) div ProgressMax;
-    WizardForm.StatusLabel.Caption := Format('Загрузка SSS 5.36.0... %d%%', [Percent]);
+    WizardForm.PreparingLabel.Caption := Format('Загрузка SSS 5.36.0... %d%%', [Percent]);
+    WizardForm.Repaint;
   end
   else
-    WizardForm.StatusLabel.Caption := 'Загрузка SSS 5.36.0...';
+    begin
+    WizardForm.PreparingLabel.Caption := 'Загрузка SSS 5.36.0...';
+    WizardForm.Repaint;
+  end;
   Result := True;
 end;
 
@@ -46,7 +50,8 @@ var
 begin
   Result := '';
   try
-    WizardForm.StatusLabel.Caption := 'Загрузка установочного пакета...';
+    WizardForm.PreparingLabel.Caption := 'Загрузка установочного пакета...';
+    WizardForm.Repaint;
     DownloadTemporaryFile(
       PackageUrl,
       'SSS-Setup.exe',
@@ -54,7 +59,8 @@ begin
       @DownloadProgress);
     PackagePath := ExpandConstant('{tmp}\SSS-Setup.exe');
 
-    WizardForm.StatusLabel.Caption := 'Запуск установки SSS...';
+    WizardForm.PreparingLabel.Caption := 'Запуск установки SSS...';
+    WizardForm.Repaint;
 
     if not Exec(PackagePath, '', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
     begin
